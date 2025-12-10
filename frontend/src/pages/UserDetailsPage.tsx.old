@@ -1,0 +1,552 @@
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  CreditCard, 
+  Calendar,
+  Cake,
+  Droplet,
+  GraduationCap,
+  Briefcase,
+  CheckCircle,
+  Download,
+  UserPlus,
+  Edit,
+  Trash2,
+  Wallet,
+  Users,
+  Eye
+} from 'lucide-react';
+
+interface UserDetails {
+  id: string;
+  nom: string;
+  role: 'ADMIN' | 'AGENT' | 'MAKER' | 'ADHERENT';
+  statut: 'Actif' | 'Inactif';
+  inscritLe: string;
+  email: string;
+  telephone: string;
+  adresse: string;
+  dateNaissance: string;
+  groupeSanguin: string;
+  cni: string;
+  dateInscription: string;
+  niveauEducation: string;
+  profession: string;
+  qrCode?: string;
+}
+
+interface Beneficiaire {
+  id: string;
+  nom: string;
+  relation: string;
+  initiales: string;
+}
+
+interface Caisse {
+  id: string;
+  nom: string;
+  numero: string;
+  statut: 'active' | 'inactive';
+  badge: string;
+  localisation: string;
+  membres: number;
+}
+
+export const UserDetailsPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'informations' | 'beneficiaires' | 'caisses'>('informations');
+
+  // Données simulées (à remplacer par un appel API)
+  const [user] = useState<UserDetails>({
+    id: '3',
+    nom: 'FATOU NDIAYE',
+    role: 'MAKER',
+    statut: 'Actif',
+    inscritLe: '04/07/2025',
+    email: 'fatou@chift.com',
+    telephone: '771234560',
+    adresse: 'Ouakam',
+    dateNaissance: '02/07/1988',
+    groupeSanguin: 'A+',
+    cni: '1234567890',
+    dateInscription: '4 juillet 2025',
+    niveauEducation: 'Bac',
+    profession: 'Commerçante',
+    qrCode: '8'
+  });
+
+  const [beneficiaires] = useState<Beneficiaire[]>([
+    {
+      id: '1',
+      nom: 'Coumba Ndiaye',
+      relation: 'Famille',
+      initiales: 'CN'
+    },
+    {
+      id: '2',
+      nom: 'Ali Ndiaye',
+      relation: 'Famille',
+      initiales: 'AN'
+    }
+  ]);
+
+  const [caisses] = useState<Caisse[]>([
+    {
+      id: '1',
+      nom: 'Caisse Solidarité Ouakam',
+      numero: 'CSO-001',
+      statut: 'active',
+      badge: 'Djambal',
+      localisation: 'Dakar, Ouakam',
+      membres: 25
+    },
+    {
+      id: '2',
+      nom: 'Caisse des Femmes',
+      numero: 'CDF-002',
+      statut: 'active',
+      badge: 'Madial',
+      localisation: 'Dakar, Parcelles',
+      membres: 18
+    }
+  ]);
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return 'text-purple-700 bg-purple-100';
+      case 'AGENT':
+        return 'text-orange-700 bg-orange-100';
+      case 'MAKER':
+        return 'text-blue-700 bg-blue-100';
+      case 'ADHERENT':
+        return 'text-green-700 bg-green-100';
+      default:
+        return 'text-gray-700 bg-gray-100';
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => navigate('/utilisateurs')}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="font-medium">Retour</span>
+            </button>
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold text-gray-900">Profil Utilisateur</h2>
+              <span className="text-sm text-gray-500">N° d'adhésion: SN-DAKAR-DAKAR-OUAKAM-0002</span>
+            </div>
+          </div>
+
+          {/* User Header Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                {/* Avatar */}
+                <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 text-gray-400">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* User Info */}
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900">{user.nom}</h1>
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Statut:</span>
+                      <span className="text-green-600 font-medium">{user.statut}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">Inscrit le:</span>
+                      <span className="text-gray-900 font-medium">{user.inscritLe}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500">ID:</span>
+                      <span className="text-gray-900 font-medium">{user.id}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Code */}
+              <div className="text-center">
+                <div className="w-32 h-32 bg-white border-2 border-gray-200 rounded-lg p-2 mb-2">
+                  <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-mono text-xs">
+                    QR CODE
+                  </div>
+                </div>
+                <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mx-auto">
+                  <Download className="w-4 h-4" />
+                  QR Code
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab('informations')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'informations'
+                  ? 'text-white bg-teal-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              } rounded-t-lg`}
+            >
+              Informations personnelles
+            </button>
+            <button
+              onClick={() => setActiveTab('beneficiaires')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'beneficiaires'
+                  ? 'text-white bg-teal-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              } rounded-t-lg`}
+            >
+              Bénéficiaires
+            </button>
+            <button
+              onClick={() => setActiveTab('caisses')}
+              className={`px-6 py-3 font-medium transition-colors ${
+                activeTab === 'caisses'
+                  ? 'text-white bg-teal-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              } rounded-t-lg`}
+            >
+              Caisses
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'informations' && (
+          <div className="space-y-8">
+            {/* Informations de contact */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Informations de contact</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Email */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Mail className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">EMAIL</p>
+                      <p className="text-base font-medium text-gray-900">{user.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Téléphone */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                      <Phone className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">TÉLÉPHONE</p>
+                      <p className="text-base font-medium text-gray-900">{user.telephone}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Adresse */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6 md:col-span-2">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">ADRESSE</p>
+                      <p className="text-base font-medium text-gray-900">{user.adresse}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Informations personnelles */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Informations personnelles</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Date de naissance */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
+                      <Cake className="w-6 h-6 text-pink-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">DATE DE NAISSANCE</p>
+                      <p className="text-base font-medium text-gray-900">{user.dateNaissance}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Groupe sanguin */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                      <Droplet className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">GROUPE SANGUIN</p>
+                      <p className="text-base font-medium text-gray-900">{user.groupeSanguin}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Informations administratives */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Informations administratives</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* CNI */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">CNI</p>
+                      <p className="text-base font-medium text-gray-900">{user.cni}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Date d'inscription */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">DATE D'INSCRIPTION</p>
+                      <p className="text-base font-medium text-gray-900">{user.dateInscription}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Informations professionnelles */}
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Informations professionnelles</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Niveau d'éducation */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                      <GraduationCap className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">NIVEAU D'ÉDUCATION</p>
+                      <p className="text-base font-medium text-gray-900">{user.niveauEducation}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profession */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                      <Briefcase className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">PROFESSION</p>
+                      <p className="text-base font-medium text-gray-900">{user.profession}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'beneficiaires' && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Bénéficiaires</h2>
+              <button className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors">
+                <UserPlus className="w-5 h-5" />
+                Ajouter un bénéficiaire
+              </button>
+            </div>
+
+            {/* Liste des bénéficiaires */}
+            {beneficiaires.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {beneficiaires.map((beneficiaire) => (
+                  <div key={beneficiaire.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar avec initiales */}
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-semibold text-sm">{beneficiaire.initiales}</span>
+                      </div>
+                      {/* Infos */}
+                      <div>
+                        <p className="font-medium text-gray-900">{beneficiaire.nom}</p>
+                        <p className="text-sm text-gray-500">{beneficiaire.relation}</p>
+                      </div>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2">
+                      <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <Edit className="w-5 h-5" />
+                      </button>
+                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun bénéficiaire</h3>
+                <p className="text-gray-500">Aucun bénéficiaire n'a été ajouté pour cet utilisateur</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'caisses' && (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Caisses</h2>
+            </div>
+
+            {/* Liste des caisses */}
+            {caisses.length > 0 ? (
+              <div className="space-y-4">
+                {caisses.map((caisse) => (
+                  <div key={caisse.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      {/* Infos principales */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center">
+                            <Wallet className="w-6 h-6 text-teal-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">{caisse.nom}</h3>
+                            <p className="text-sm text-gray-500">N° {caisse.numero}</p>
+                          </div>
+                        </div>
+
+                        {/* Détails */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                          {/* Statut */}
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Statut</p>
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                              caisse.statut === 'active' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {caisse.statut === 'active' ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+
+                          {/* Badge */}
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Type</p>
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                              {caisse.badge}
+                            </span>
+                          </div>
+
+                          {/* Localisation */}
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Localisation</p>
+                            <div className="flex items-center gap-1 text-sm text-gray-700">
+                              <MapPin className="w-4 h-4" />
+                              <span>{caisse.localisation}</span>
+                            </div>
+                          </div>
+
+                          {/* Membres */}
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Membres</p>
+                            <div className="flex items-center gap-1 text-sm text-gray-700">
+                              <Users className="w-4 h-4" />
+                              <span>{caisse.membres}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-col gap-2 ml-4">
+                        <button 
+                          onClick={() => navigate(`/caisse/${caisse.id}`)}
+                          className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Voir
+                        </button>
+                        <button className="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                          Retirer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg border border-gray-200 p-8">
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune caisse</h3>
+                  <p className="text-gray-500 mb-4">Cet utilisateur n'appartient à aucune caisse pour le moment</p>
+                  <button className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors">
+                    Assigner à une caisse
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

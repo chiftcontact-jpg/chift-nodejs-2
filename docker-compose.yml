@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: chift-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: chift
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - chift-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # User Service (Micro-service utilisateurs)
+  user-service:
+    build:
+      context: ./backend-user-service
+      dockerfile: Dockerfile
+    container_name: chift-user-service
+    restart: unless-stopped
+    ports:
+      - "3050:3050"
+    environment:
+      NODE_ENV: development
+      PORT: 3050
+      MONGODB_URI: mongodb://mongodb:27017/chift_users
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./backend-user-service:/app
+      - /app/node_modules
+    networks:
+      - chift-network
+    command: npm run dev
+
+  # Backend (optionnel - peut être lancé localement)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chift-backend
+    restart: unless-stopped
+    ports:
+      - "3045:3045"
+    environment:
+      NODE_ENV: development
+      PORT: 3045
+      MONGODB_URI: mongodb://mongodb:27017/chift
+      USER_SERVICE_URL: http://user-service:3050
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - chift-network
+    command: npm run dev
+
+  # Frontend (optionnel - peut être lancé localement)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chift-frontend
+    restart: unless-stopped
+    ports:
+      - "3046:3046"
+    environment:
+      VITE_API_URL: http://localhost:3045/api
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - chift-network
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  chift-network:
+    driver: bridge

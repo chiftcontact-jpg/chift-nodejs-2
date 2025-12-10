@@ -1,0 +1,71 @@
+import express, { Application } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import config from './config';
+import connectDB from './config/database';
+import routes from './routes';
+import { errorHandler, notFound } from './middlewares/errorHandler';
+import logger from './utils/logger';
+
+const app: Application = express();
+
+// Connexion à la base de données
+connectDB();
+
+// Middlewares de sécurité
+app.use(helmet());
+app.use(cors({ origin: config.cors.origin }));
+
+// Parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Logging
+if (config.env === 'development') {
+  app.use(morgan('dev'));
+}
+
+// Route de base
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Bienvenue sur l\'API CHIFT',
+    version: '1.0.0',
+    copyright: '© CHIFT - Protégé par la loi 2008-09 du Sénégal (Article 14) n° 514312250822'
+  });
+});
+
+// Routes API
+app.use(`/api/${config.env === 'test' ? 'v1' : 'v1'}`, routes);
+
+// Gestion des erreurs
+app.use(notFound);
+app.use(errorHandler);
+
+// Démarrage du serveur
+const PORT = config.port;
+
+const server = app.listen(PORT, () => {
+  logger.info(`🚀 Serveur démarré en mode ${config.env}`);
+  logger.info(`📡 Écoute sur le port ${PORT}`);
+  logger.info(`🔗 URL: http://localhost:${PORT}`);
+});
+
+// Gestion des erreurs non capturées
+process.on('unhandledRejection', (err: Error) => {
+  logger.error('UNHANDLED REJECTION! 💥 Arrêt du serveur...');
+  logger.error(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+process.on('SIGTERM', () => {
+  logger.info('👋 SIGTERM reçu. Arrêt gracieux du serveur');
+  server.close(() => {
+    logger.info('💥 Processus terminé!');
+  });
+});
+
+export default app;

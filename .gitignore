@@ -1,0 +1,74 @@
+# Fichiers sensibles
+*.env
+.env
+.env.local
+.env.*.local
+
+# Scripts shell
+*.sh
+
+# Documentation Markdown (à ignorer selon la demande)
+*.md
+
+# Dépendances
+node_modules/
+*/node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Fichiers de build
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Fichiers de cache
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Fichiers d'éditeur
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Fichiers de test
+coverage/
+*.lcov
+.nyc_output/
+
+# Certificats SSL
+ssl/*.pem
+ssl/*.key
+ssl/*.crt
+*.pem
+*.key
+*.crt
+
+# Base de données locale
+*.sqlite
+*.sqlite3
+*.db
+
+# Fichiers temporaires
+tmp/
+temp/
+*.tmp
+
+# Fichiers système
+Thumbs.db
+.Spotlight-V100
+.Trashes

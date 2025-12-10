@@ -1,0 +1,20 @@
+{
+  "name": "chift-monorepo",
+  "version": "1.0.0",
+  "description": "Système de Microfinance CHIFT - Monorepo",
+  "private": true,
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build:backend && npm run build:frontend",
+    "dev": "./start.sh all"
+  },
+  "keywords": ["microfinance", "chift", "monorepo"],
+  "author": "CHIFT Team",
+  "license": "MIT"
+}

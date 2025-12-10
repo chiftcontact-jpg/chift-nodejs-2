@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Caisse</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #f59e0b;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px 8px 0 0;
+    }
+    .content {
+      background-color: #f9fafb;
+      padding: 30px;
+      border-radius: 0 0 8px 8px;
+    }
+    .info-box {
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #666;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Notification Caisse</h1>
+  </div>
+  <div class="content">
+    <h2>{{title}}</h2>
+    <p>{{message}}</p>
+    <div class="info-box">
+      {{{details}}}
+    </div>
+    <p>Cordialement,<br>L'équipe Chift</p>
+  </div>
+  <div class="footer">
+    <p>© 2025 Chift Platform. Tous droits réservés.</p>
+  </div>
+</body>
+</html>
