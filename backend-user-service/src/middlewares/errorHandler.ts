@@ -24,7 +24,8 @@ export const errorHandler = (
     message: err.message,
     stack: err.stack,
     url: req.originalUrl,
-    method: req.method
+    method: req.method,
+    body: req.body
   });
 
   if (err instanceof AppError) {

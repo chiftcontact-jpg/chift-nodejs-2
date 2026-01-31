@@ -20,7 +20,7 @@ export interface ICommunaute extends Document {
   makerId: mongoose.Types.ObjectId; // Président/responsable
   bureauExecutif?: Array<{
     role: string;
-    adherentId: mongoose.Types.ObjectId;
+    utilisateurId: mongoose.Types.ObjectId;
     dateDebut: Date;
     dateFin?: Date;
   }>;
@@ -112,9 +112,9 @@ const CommunauteSchema = new Schema<ICommunaute>(
     },
     bureauExecutif: [{
       role: { type: String, required: true },
-      adherentId: {
+      utilisateurId: {
         type: Schema.Types.ObjectId,
-        ref: 'Adhérent',
+        ref: 'Utilisateur',
         required: true
       },
       dateDebut: { type: Date, required: true },

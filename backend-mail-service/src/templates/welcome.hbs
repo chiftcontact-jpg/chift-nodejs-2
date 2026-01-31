@@ -3,62 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bienvenue sur Chift</title>
+  <title>Bienvenue dans la Communauté CHIFT</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       line-height: 1.6;
-      color: #333;
+      color: #1a202c;
       max-width: 600px;
       margin: 0 auto;
       padding: 20px;
+      background-color: #f7fafc;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .header {
-      background-color: #2563eb;
+      background-color: #0d9488;
       color: white;
-      padding: 20px;
+      padding: 30px 20px;
       text-align: center;
-      border-radius: 8px 8px 0 0;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
     }
     .content {
-      background-color: #f9fafb;
-      padding: 30px;
-      border-radius: 0 0 8px 8px;
+      padding: 40px 30px;
+    }
+    .welcome-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 20px;
+    }
+    .credentials-box {
+      background-color: #f0fdfa;
+      border: 1px solid #99f6e4;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 25px 0;
+    }
+    .credential-item {
+      margin-bottom: 10px;
+    }
+    .label {
+      font-weight: 600;
+      color: #0f766e;
+      display: inline-block;
+      width: 120px;
+    }
+    .value {
+      font-family: monospace;
+      background: #e6fffa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #111827;
+    }
+    .role-badge {
+      display: inline-block;
+      background-color: #ccfbf1;
+      color: #0f766e;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 10px;
+    }
+    .button-container {
+      text-align: center;
+      margin: 30px 0;
     }
     .button {
       display: inline-block;
-      background-color: #2563eb;
-      color: white;
-      padding: 12px 30px;
+      background-color: #0d9488;
+      color: #ffffff !important;
+      padding: 14px 32px;
       text-decoration: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .warning-text {
+      font-size: 13px;
+      color: #718096;
+      background-color: #fffaf0;
+      border-left: 4px solid #ed8936;
+      padding: 12px;
       margin-top: 20px;
     }
     .footer {
       text-align: center;
-      margin-top: 30px;
-      color: #666;
+      padding: 25px;
+      color: #718096;
       font-size: 12px;
+      background-color: #f8fafc;
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Bienvenue sur Chift</h1>
-  </div>
-  <div class="content">
-    <h2>Bonjour {{name}} 👋</h2>
-    <p>Nous sommes ravis de vous accueillir sur la plateforme Chift !</p>
-    <p>Votre compte a été créé avec succès. Pour finaliser votre inscription et définir votre mot de passe, veuillez cliquer sur le bouton ci-dessous :</p>
-    <a href="{{resetUrl}}" class="button">Définir mon mot de passe</a>
-    <p style="margin-top: 20px; color: #666; font-size: 14px;">
-      Ce lien est valable pendant 7 jours. Si vous n'avez pas demandé la création de ce compte, ignorez cet email.
-    </p>
-    <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
-    <p>Cordialement,<br>L'équipe Chift</p>
-  </div>
-  <div class="footer">
-    <p>© 2025 Chift Platform. Tous droits réservés.</p>
+  <div class="container">
+    <div class="header">
+      <h1>Bienvenue dans la Communauté CHIFT</h1>
+    </div>
+    <div class="content">
+      <p class="welcome-text">Bonjour {{name}},</p>
+      
+      <p>Nous avons le plaisir de vous accueillir au sein de la plateforme CHIFT. Votre compte a été configuré avec succès avec le profil suivant :</p>
+      
+      <div style="text-align: center;">
+        <span class="role-badge">{{role}}</span>
+      </div>
+
+      <div class="credentials-box">
+        <h3 style="margin-top: 0; color: #0f766e; font-size: 16px;">Vos accès personnels :</h3>
+        <div class="credential-item">
+          <span class="label">Lien :</span>
+          <a href="{{loginUrl}}" style="color: #0d9488;">Accéder à CHIFT</a>
+        </div>
+        <div class="credential-item">
+          <span class="label">Identifiant :</span>
+          <span class="value">{{credentials.email}}</span>
+        </div>
+        <div class="credential-item">
+          <span class="label">Mot de passe :</span>
+          <span class="value">{{credentials.password}}</span>
+        </div>
+      </div>
+
+      <p><strong>Note importante :</strong> Ces accès sont exclusivement dédiés à votre profil d'utilisateur uniquement. Pour des raisons de sécurité, nous vous demandons de modifier ce mot de passe dès votre première connexion en utilisant le lien ci-dessous :</p>
+
+      <div class="button-container">
+        <a href="{{resetUrl}}" class="button">Définir mon mot de passe</a>
+      </div>
+
+      <div class="warning-text">
+        Ce lien de configuration est valable pendant 7 jours. Passé ce délai, vous devrez demander un nouveau lien de réinitialisation.
+      </div>
+
+      <p style="margin-top: 30px;">Si vous avez besoin d'assistance, notre équipe support est à votre entière disposition.</p>
+      
+      <p>Bienvenue à bord !<br><strong>L'équipe CHIFT</strong></p>
+    </div>
+    <div class="footer">
+      <p>© 2025 CHIFT Platform. Tous droits réservés.</p>
+      <p>Sénégal, Vision 2050 - Excellence et Innovation</p>
+    </div>
   </div>
 </body>
 </html>

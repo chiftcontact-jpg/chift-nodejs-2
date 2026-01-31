@@ -1,16 +1,16 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-// Adhésion à une caisse : un adhérent peut être membre de plusieurs caisses
+// Adhésion à une caisse : un utilisateur peut être membre de plusieurs caisses
 export interface IAdhesionCaisse {
   caisseId: mongoose.Types.ObjectId;
-  makerId?: mongoose.Types.ObjectId; // Maker qui a enrôlé l'adhérent dans cette caisse
+  makerId?: mongoose.Types.ObjectId; // Maker qui a enrôlé l'utilisateur dans cette caisse
   dateAdhesion: Date;
   statutAdhesion: 'actif' | 'inactif' | 'suspendu';
   // Informations spécifiques à cette caisse
-  numeroCaisse?: string; // Numéro d'adhérent dans cette caisse spécifique
+  numeroCaisse?: string; // Numéro d'utilisateur dans cette caisse spécifique
 }
 
-export interface IAdhérent extends Document {
+export interface IUtilisateur extends Document {
   nom: string;
   prenom: string;
   telephone: string;
@@ -23,15 +23,15 @@ export interface IAdhérent extends Document {
   dateNaissance: Date;
   profession?: string;
   statut: 'actif' | 'inactif' | 'suspendu';
-  numeroAdherent: string; // Numéro unique global CHIFT
-  typeAdherent: 'communautaire' | 'individuel';
+  numeroUtilisateur: string; // Numéro unique global CHIFT
+  typeUtilisateur: 'communautaire' | 'individuel';
   
-  // Multi-caisses : un adhérent peut être dans plusieurs caisses
+  // Multi-caisses : un utilisateur peut être dans plusieurs caisses
   caisses: IAdhesionCaisse[];
   
   // Relations historiques (conservées pour compatibilité)
   communauteId?: mongoose.Types.ObjectId;
-  agentCollecteId?: mongoose.Types.ObjectId; // Premier agent qui a enrôlé l'adhérent
+  agentCollecteId?: mongoose.Types.ObjectId; // Premier agent qui a enrôlé l'utilisateur
   makerId?: mongoose.Types.ObjectId; // Premier maker (si enrôlé par un maker)
   
   // Package CHIFT
@@ -99,7 +99,7 @@ const AdhesionCaisseSchema = new Schema<IAdhesionCaisse>({
   numeroCaisse: { type: String }
 }, { _id: false });
 
-const AdhérentSchema = new Schema<IAdhérent>(
+const UtilisateurSchema = new Schema<IUtilisateur>(
   {
     nom: { type: String, required: true },
     prenom: { type: String, required: true },
@@ -117,12 +117,12 @@ const AdhérentSchema = new Schema<IAdhérent>(
       enum: ['actif', 'inactif', 'suspendu'],
       default: 'actif'
     },
-    numeroAdherent: {
+    numeroUtilisateur: {
       type: String,
       unique: true,
       required: true
     },
-    typeAdherent: {
+    typeUtilisateur: {
       type: String,
       enum: ['communautaire', 'individuel'],
       required: true
@@ -211,13 +211,14 @@ const AdhérentSchema = new Schema<IAdhérent>(
 );
 
 // Index
-AdhérentSchema.index({ nom: 1, prenom: 1 });
-AdhérentSchema.index({ numeroAdherent: 1 });
-AdhérentSchema.index({ 'compteChift.numeroCompte': 1 });
-AdhérentSchema.index({ 'csu.numeroCSU': 1 });
-AdhérentSchema.index({ communauteId: 1 });
-AdhérentSchema.index({ region: 1, commune: 1 });
-AdhérentSchema.index({ 'caisses.caisseId': 1, 'caisses.statutAdhesion': 1 });
-AdhérentSchema.index({ 'caisses.makerId': 1 });
+UtilisateurSchema.index({ nom: 1, prenom: 1 });
+UtilisateurSchema.index({ numeroUtilisateur: 1 });
+UtilisateurSchema.index({ 'compteChift.numeroCompte': 1 });
+UtilisateurSchema.index({ 'csu.numeroCSU': 1 });
+UtilisateurSchema.index({ communauteId: 1 });
+UtilisateurSchema.index({ region: 1, commune: 1 });
+UtilisateurSchema.index({ 'caisses.caisseId': 1, 'caisses.statutAdhesion': 1 });
+UtilisateurSchema.index({ 'caisses.makerId': 1 });
 
-export default mongoose.model<IAdhérent>('Adhérent', AdhérentSchema);
+const Utilisateur = mongoose.model<IUtilisateur>('Utilisateur', UtilisateurSchema);
+export default Utilisateur;

@@ -4,7 +4,7 @@ export interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  role: 'ADMIN' | 'AGENT' | 'SUPERVISEUR' | 'MAKER' | 'ADHERENT';
+  role: 'ADMIN' | 'AGENT' | 'SUPERVISEUR' | 'MAKER' | 'UTILISATEUR';
   nom: string;
   prenom: string;
   telephone: string;
@@ -12,7 +12,7 @@ export interface IUser extends Document {
   
   // Référence selon le rôle
   referenceId?: mongoose.Types.ObjectId;
-  referenceModel?: 'Agent' | 'Maker' | 'Adherent';
+  referenceModel?: 'Agent' | 'Maker' | 'Utilisateur';
   
   // Permissions
   permissions: string[];
@@ -50,7 +50,7 @@ const UserSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['ADMIN', 'AGENT', 'SUPERVISEUR', 'MAKER', 'ADHERENT'],
+      enum: ['ADMIN', 'AGENT', 'SUPERVISEUR', 'MAKER', 'UTILISATEUR'],
       required: true
     },
     nom: { type: String, required: true },
@@ -69,7 +69,7 @@ const UserSchema = new Schema<IUser>(
     },
     referenceModel: {
       type: String,
-      enum: ['Agent', 'Maker', 'Adherent']
+      enum: ['Agent', 'Maker', 'Utilisateur']
     },
     
     // Permissions

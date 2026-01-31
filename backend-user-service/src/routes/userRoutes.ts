@@ -13,6 +13,7 @@ const asyncHandler = (fn: Function) => {
 
 // Routes publiques
 router.post('/login', asyncHandler(userController.login.bind(userController)));
+router.post('/register', asyncHandler(userController.createUser.bind(userController)));
 router.post('/set-password', asyncHandler(userController.setPasswordWithToken.bind(userController)));
 
 // Routes protégées

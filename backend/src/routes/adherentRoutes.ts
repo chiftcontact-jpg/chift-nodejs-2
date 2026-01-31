@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import AdhérentController from '../controllers/adherentController';
+import UtilisateurController from '../controllers/adherentController';
 import { protect, authorize } from '../middlewares/auth';
 import { validate, schemas } from '../middlewares/validation';
 
@@ -9,70 +9,70 @@ const router = Router();
 router.use(protect);
 
 /**
- * @route   POST /api/v1/adherents
- * @desc    Créer un nouvel adhérent
+ * @route   POST /api/v1/utilisateurs
+ * @desc    Créer un nouvel utilisateur
  * @access  Agent, Maker, Admin
  */
 router.post(
   '/',
   authorize('agent', 'maker', 'admin'),
-  validate(schemas.createAdherent),
-  AdhérentController.creerAdherent
+  validate(schemas.createUtilisateur),
+  UtilisateurController.creerUtilisateur
 );
 
 /**
- * @route   GET /api/v1/adherents
- * @desc    Liste tous les adhérents (avec filtres)
+ * @route   GET /api/v1/utilisateurs
+ * @desc    Liste tous les utilisateurs (avec filtres)
  * @access  Agent, Maker, Admin, Mutuelle
  */
 router.get(
   '/',
   authorize('agent', 'maker', 'admin', 'mutuelle'),
-  AdhérentController.listerAdherents
+  UtilisateurController.listerUtilisateurs
 );
 
 /**
- * @route   GET /api/v1/adherents/search
- * @desc    Rechercher des adhérents
+ * @route   GET /api/v1/utilisateurs/search
+ * @desc    Rechercher des utilisateurs
  * @access  Agent, Maker, Admin, Mutuelle
  */
 router.get(
   '/search',
   authorize('agent', 'maker', 'admin', 'mutuelle'),
-  AdhérentController.rechercherAdherents
+  UtilisateurController.rechercherUtilisateurs
 );
 
 /**
- * @route   GET /api/v1/adherents/:id
- * @desc    Récupère un adhérent par ID
+ * @route   GET /api/v1/utilisateurs/:id
+ * @desc    Récupère un utilisateur par ID
  * @access  Agent, Maker, Admin, Mutuelle
  */
 router.get(
   '/:id',
   authorize('agent', 'maker', 'admin', 'mutuelle'),
-  AdhérentController.getAdherent
+  UtilisateurController.getUtilisateur
 );
 
 /**
- * @route   PUT /api/v1/adherents/:id
- * @desc    Met à jour un adhérent
+ * @route   PUT /api/v1/utilisateurs/:id
+ * @desc    Met à jour un utilisateur
  * @access  Agent, Maker, Admin
  */
 router.put(
   '/:id',
   authorize('agent', 'maker', 'admin'),
-  AdhérentController.mettreAJourAdherent
+  UtilisateurController.mettreAJourUtilisateur
 );
 
 /**
- * @route   POST /api/v1/adherents/:id/carte-nfc
- * @desc    Attribuer une carte NFC à un adhérent
+ * @route   POST /api/v1/utilisateurs/:id/carte-nfc
+ * @desc    Attribuer une carte NFC à un utilisateur
  * @access  Mutuelle, Admin
  */
 router.post(
   '/:id/carte-nfc',
   authorize('mutuelle', 'admin'),
-  AdhérentController.attribuerCarteNFC
+  UtilisateurController.attribuerCarteNFC
 );
 
 export default router;

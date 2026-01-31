@@ -1,5 +1,5 @@
 import Souscription, { ISouscription } from '../models/Souscription';
-import AdhérentService from './adherentService';
+import UtilisateurService from './utilisateurService';
 import Agent from '../models/Agent';
 import Maker from '../models/Maker';
 import Communaute from '../models/Communaute';
@@ -69,9 +69,9 @@ class SouscriptionService {
   }
 
   /**
-   * Traite l'enrôlement d'un adhérent à partir d'une souscription
+   * Traite l'enrôlement d'un utilisateur à partir d'une souscription
    */
-  async traiterEnrolement(souscriptionId: string, dataAdherent: any): Promise<any> {
+  async traiterEnrolement(souscriptionId: string, dataUtilisateur: any): Promise<any> {
     try {
       const souscription = await Souscription.findById(souscriptionId);
 
@@ -83,10 +83,10 @@ class SouscriptionService {
         throw new AppError('Cette souscription ne peut plus être traitée', 400);
       }
 
-      // Créer l'adhérent
-      const adherent = await AdhérentService.creerAdherent({
-        ...dataAdherent,
-        typeAdherent: souscription.typeSouscription === 'individuelle' ? 'individuel' : 'communautaire',
+      // Créer l'utilisateur
+      const utilisateur = await UtilisateurService.creerUtilisateur({
+        ...dataUtilisateur,
+        typeUtilisateur: souscription.typeSouscription === 'individuelle' ? 'individuel' : 'communautaire',
         communauteId: souscription.communauteId,
         agentCollecteId: souscription.agentCollecteId,
         makerId: souscription.makerId,
@@ -98,14 +98,14 @@ class SouscriptionService {
       });
 
       // Mettre à jour la souscription
-      souscription.adherentId = adherent._id as any;
+      souscription.utilisateurId = utilisateur._id as any;
       souscription.etapeActuelle = 'enrolement';
       souscription.dateEnrolement = new Date();
       souscription.historique.push({
         action: 'Enrôlement complété',
         utilisateur: souscription.agentCollecteId?.toString() || 'Système',
         date: new Date(),
-        details: `Adhérent créé: ${adherent.numeroAdherent}`
+        details: `Utilisateur créé: ${utilisateur.numeroUtilisateur}`
       });
 
       await souscription.save();
@@ -113,7 +113,7 @@ class SouscriptionService {
       // Incrémenter le compteur de l'agent
       if (souscription.agentCollecteId) {
         await Agent.findByIdAndUpdate(souscription.agentCollecteId, {
-          $inc: { nombreAdhérentsRecrutés: 1 }
+          $inc: { nombreUtilisateursRecrutés: 1 }
         });
       }
 
@@ -121,7 +121,7 @@ class SouscriptionService {
 
       return {
         souscription,
-        adherent
+        utilisateur
       };
     } catch (error: any) {
       logger.error('Erreur traitement enrôlement:', error);
@@ -179,9 +179,9 @@ class SouscriptionService {
 
     await souscription.save();
 
-    // Mettre à jour l'adhérent avec la mutuelle
-    if (souscription.adherentId) {
-      await AdhérentService.mettreAJourAdherent(souscription.adherentId.toString(), {
+    // Mettre à jour l'utilisateur avec la mutuelle
+    if (souscription.utilisateurId) {
+      await UtilisateurService.mettreAJourUtilisateur(souscription.utilisateurId.toString(), {
         mutuelleProche: mutuelleAssignee
       });
     }
@@ -202,7 +202,7 @@ class SouscriptionService {
     if (filters.agentCollecteId) query.agentCollecteId = filters.agentCollecteId;
 
     const souscriptions = await Souscription.find(query)
-      .populate('adherentId')
+      .populate('utilisateurId')
       .populate('agentCollecteId')
       .populate('makerId')
       .populate('communauteId')
@@ -216,7 +216,7 @@ class SouscriptionService {
    */
   async getSouscriptionById(id: string): Promise<ISouscription> {
     const souscription = await Souscription.findById(id)
-      .populate('adherentId')
+      .populate('utilisateurId')
       .populate('agentCollecteId')
       .populate('makerId')
       .populate('communauteId');

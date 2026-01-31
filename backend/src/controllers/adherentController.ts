@@ -1,19 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import AdhérentService from '../services/adherentService';
+import UtilisateurService from '../services/adherentService';
 import { AppError } from '../middlewares/errorHandler';
 
-class AdhérentController {
+class UtilisateurController {
   /**
-   * Crée un nouvel adhérent
+   * Crée un nouvel utilisateur
    */
-  async creerAdherent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async creerUtilisateur(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const adherent = await AdhérentService.creerAdherent(req.body);
+      const utilisateur = await UtilisateurService.creerUtilisateur(req.body);
 
       res.status(201).json({
         success: true,
-        message: 'Adhérent créé avec succès',
-        data: adherent
+        message: 'Utilisateur créé avec succès',
+        data: utilisateur
       });
     } catch (error) {
       next(error);
@@ -21,15 +21,15 @@ class AdhérentController {
   }
 
   /**
-   * Récupère un adhérent par ID
+   * Récupère un utilisateur par ID
    */
-  async getAdherent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getUtilisateur(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const adherent = await AdhérentService.getAdherentById(req.params.id);
+      const utilisateur = await UtilisateurService.getUtilisateurById(req.params.id);
 
       res.status(200).json({
         success: true,
-        data: adherent
+        data: utilisateur
       });
     } catch (error) {
       next(error);
@@ -37,23 +37,23 @@ class AdhérentController {
   }
 
   /**
-   * Liste tous les adhérents
+   * Liste tous les utilisateurs
    */
-  async listerAdherents(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async listerUtilisateurs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const filters = {
         statut: req.query.statut,
-        typeAdherent: req.query.typeAdherent,
+        typeUtilisateur: req.query.typeUtilisateur,
         region: req.query.region,
         communauteId: req.query.communauteId
       };
 
-      const adherents = await AdhérentService.listerAdherents(filters);
+      const utilisateurs = await UtilisateurService.listerUtilisateurs(filters);
 
       res.status(200).json({
         success: true,
-        count: adherents.length,
-        data: adherents
+        count: utilisateurs.length,
+        data: utilisateurs
       });
     } catch (error) {
       next(error);
@@ -61,16 +61,16 @@ class AdhérentController {
   }
 
   /**
-   * Met à jour un adhérent
+   * Met à jour un utilisateur
    */
-  async mettreAJourAdherent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async mettreAJourUtilisateur(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const adherent = await AdhérentService.mettreAJourAdherent(req.params.id, req.body);
+      const utilisateur = await UtilisateurService.mettreAJourUtilisateur(req.params.id, req.body);
 
       res.status(200).json({
         success: true,
-        message: 'Adhérent mis à jour',
-        data: adherent
+        message: 'Utilisateur mis à jour',
+        data: utilisateur
       });
     } catch (error) {
       next(error);
@@ -88,7 +88,7 @@ class AdhérentController {
         throw new AppError('Numéro de série et mutuelle requis', 400);
       }
 
-      const adherent = await AdhérentService.attribuerCarteNFC(
+      const utilisateur = await UtilisateurService.attribuerCarteNFC(
         req.params.id,
         numeroSerie,
         mutuelleRecuperation
@@ -97,7 +97,7 @@ class AdhérentController {
       res.status(200).json({
         success: true,
         message: 'Carte NFC attribuée',
-        data: adherent
+        data: utilisateur
       });
     } catch (error) {
       next(error);
@@ -105,9 +105,9 @@ class AdhérentController {
   }
 
   /**
-   * Recherche d'adhérents
+   * Recherche d'utilisateurs
    */
-  async rechercherAdherents(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async rechercherUtilisateurs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const searchTerm = req.query.q as string;
 
@@ -115,12 +115,12 @@ class AdhérentController {
         throw new AppError('Terme de recherche requis', 400);
       }
 
-      const adherents = await AdhérentService.rechercherAdherents(searchTerm);
+      const utilisateurs = await UtilisateurService.rechercherUtilisateurs(searchTerm);
 
       res.status(200).json({
         success: true,
-        count: adherents.length,
-        data: adherents
+        count: utilisateurs.length,
+        data: utilisateurs
       });
     } catch (error) {
       next(error);
@@ -128,4 +128,4 @@ class AdhérentController {
   }
 }
 
-export default new AdhérentController();
+export default new UtilisateurController();

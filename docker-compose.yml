@@ -1,11 +1,14 @@
-version: '3.8'
-
 services:
   # MongoDB
   mongodb:
     image: mongo:7.0
     container_name: chift-mongodb
-    restart: unless-stopped
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "27017:27017"
     environment:
@@ -16,10 +19,49 @@ services:
     networks:
       - chift-network
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Backend Gateway (Point d'entrée principal)
+  backend-gateway:
+    build:
+      context: ./backend-gateway
+      dockerfile: Dockerfile
+    container_name: chift-gateway
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend-gateway:/app
+      - gateway_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      USER_SERVICE_URL: http://user-service:3050
+      CAISSE_SERVICE_URL: http://caisse-service:3051
+      BACKEND_URL: http://backend:3045
+      COMPTES_SERVICE_URL: http://comptes-service:3053
+      JWT_SECRET: super_secret_chift_key_2025
+      JWT_REFRESH_SECRET: super_secret_refresh_chift_key_2025
+      CORS_ORIGIN: http://localhost:3046,http://localhost:3047,http://192.168.1.21:3046,http://192.168.1.28:3046,https://frontend-ieq4toj2k-inssatoures-projects.vercel.app
+      FRONTEND_URL: http://localhost:3046
+    depends_on:
+      user-service:
+        condition: service_started
+      caisse-service:
+        condition: service_started
+      comptes-service:
+        condition: service_started
+    networks:
+      - chift-network
+    command: sh -c "npm install && npm run dev"
 
   # User Service (Micro-service utilisateurs)
   user-service:
@@ -27,72 +69,158 @@ services:
       context: ./backend-user-service
       dockerfile: Dockerfile
     container_name: chift-user-service
-    restart: unless-stopped
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "3050:3050"
+    volumes:
+      - ./backend-user-service:/app
+      - user_node_modules:/app/node_modules
     environment:
       NODE_ENV: development
       PORT: 3050
       MONGODB_URI: mongodb://mongodb:27017/chift_users
+      JWT_SECRET: super_secret_chift_key_2025
+      JWT_REFRESH_SECRET: super_secret_refresh_chift_key_2025
+      CORS_ORIGIN: http://localhost:3046,http://localhost:3047,http://192.168.1.21:3046,http://192.168.1.28:3046,https://frontend-ieq4toj2k-inssatoures-projects.vercel.app
+      FRONTEND_URL: http://localhost:3046
     depends_on:
       mongodb:
         condition: service_healthy
-    volumes:
-      - ./backend-user-service:/app
-      - /app/node_modules
     networks:
       - chift-network
-    command: npm run dev
+    command: sh -c "npm install && npm run dev"
 
-  # Backend (optionnel - peut être lancé localement)
+  # Caisse Service (Micro-service caisses)
+  caisse-service:
+    build:
+      context: ./backend-caisse-service
+      dockerfile: Dockerfile
+    container_name: chift-caisse-service
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "3051:3051"
+    volumes:
+      - ./backend-caisse-service:/app
+      - caisse_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: 3051
+      MONGODB_URI: mongodb://mongodb:27017/chift_caisse
+      JWT_SECRET: super_secret_chift_key_2025
+      JWT_REFRESH_SECRET: super_secret_refresh_chift_key_2025
+      CORS_ORIGIN: http://localhost:3046,http://localhost:3047,http://192.168.1.21:3046,http://192.168.1.28:3046,https://frontend-ieq4toj2k-inssatoures-projects.vercel.app
+      FRONTEND_URL: http://localhost:3046
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - chift-network
+    command: sh -c "npm install && npm run dev"
+
+  # Comptes & Services Service
+  comptes-service:
+    build:
+      context: ./backend-comptes-service
+      dockerfile: Dockerfile
+    container_name: chift-comptes-service
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "3053:3053"
+    volumes:
+      - ./backend-comptes-service:/app
+      - comptes_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: 3053
+      MONGODB_URI: mongodb://mongodb:27017/chift_comptes
+      JWT_SECRET: super_secret_chift_key_2025
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - chift-network
+    command: sh -c "npm install && npm run dev"
+
+  # Backend Legacy (optionnel)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: chift-backend
-    restart: unless-stopped
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "3045:3045"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
     environment:
       NODE_ENV: development
       PORT: 3045
-      MONGODB_URI: mongodb://mongodb:27017/chift
-      USER_SERVICE_URL: http://user-service:3050
+      MONGODB_URI: mongodb://mongodb:27017/chift_legacy
+      JWT_SECRET: super_secret_chift_key_2025
     depends_on:
       mongodb:
         condition: service_healthy
-      user-service:
-        condition: service_started
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     networks:
       - chift-network
-    command: npm run dev
+    command: sh -c "npm install && npm run dev"
 
-  # Frontend (optionnel - peut être lancé localement)
+  # Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: chift-frontend
-    restart: unless-stopped
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "3046:3046"
-    environment:
-      VITE_API_URL: http://localhost:3045/api
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - frontend_node_modules:/app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:3000
+      VITE_USER_SERVICE_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost:3046
+    stdin_open: true
+    tty: true
     networks:
       - chift-network
-    command: npm run dev
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   mongodb_data:
-    driver: local
   mongodb_config:
-    driver: local
+  user_node_modules:
+  caisse_node_modules:
+  comptes_node_modules:
+  gateway_node_modules:
+  backend_node_modules:
+  frontend_node_modules:
 
 networks:
   chift-network:

@@ -49,7 +49,7 @@ export const getProfilAgent = async (
         typeAgent: agent.typeAgent,
         services: agent.services,
         csu: agent.csu,
-        nombreAdhérentsRecrutés: agent.nombreAdhérentsRecrutés,
+        nombreUtilisateursRecrutés: agent.nombreUtilisateursRecrutés,
         createdAt: agent.createdAt
       }
     });

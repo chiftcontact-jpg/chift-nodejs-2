@@ -62,7 +62,8 @@ const SetPasswordPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/users/set-password', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/users/set-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,9 +74,18 @@ const SetPasswordPage = () => {
         }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Erreur parsing JSON:', e);
+        }
+      }
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setSuccess(true);
         setTimeout(() => {
           navigate('/login');

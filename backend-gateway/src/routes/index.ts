@@ -11,6 +11,11 @@ const router = Router();
 // Routes d'authentification (sans middleware auth)
 // ==========================================
 
+// Route de santé
+router.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 // Connexion
 router.post('/auth/login', authController.login.bind(authController));
 
@@ -144,6 +149,86 @@ router.use(
   })
 );
 
+// Proxy vers le service comptes et services
+router.use(
+  ['/comptes', '/services'],
+  authenticate,
+  createProxyMiddleware({
+    target: config.services.comptes,
+    changeOrigin: true,
+    selfHandleResponse: false,
+    pathRewrite: (path) => {
+      if (path.startsWith('/api/comptes')) return path;
+      if (path.startsWith('/api/services')) return path;
+      // Pour les requêtes directes vers /comptes ou /services
+      if (path.startsWith('/comptes')) return `/api${path}`;
+      if (path.startsWith('/services')) return `/api${path}`;
+      return path;
+    },
+    onProxyReq: (proxyReq, req: any, res) => {
+      if (req.user) {
+        proxyReq.setHeader('X-User-Id', req.user.userId || '');
+        proxyReq.setHeader('X-User-Role', req.user.role || '');
+        proxyReq.setHeader('X-User-Email', req.user.email || '');
+      }
+      fixRequestBody(proxyReq, req);
+      logger.info('Proxy vers comptes-service', {
+        path: req.path,
+        method: req.method,
+        target: config.services.comptes,
+      });
+    },
+    onError: (err, req, res) => {
+      logger.error('Erreur proxy comptes-service', {
+        error: err.message,
+        path: req.url,
+      });
+      res.status(502).json({
+        success: false,
+        message: 'Service comptes & services indisponible',
+      });
+    },
+  })
+);
+
+// Proxy vers le service backend legacy (pour les routes non encore migrées)
+const legacyRoutes = ['/utilisateurs', '/souscriptions', '/agents', '/reseaux', '/init'];
+router.use(
+  legacyRoutes,
+  authenticate,
+  createProxyMiddleware({
+    target: config.services.backend,
+    changeOrigin: true,
+    selfHandleResponse: false,
+    pathRewrite: (path) => {
+      return `/api${path}`;
+    },
+    onProxyReq: (proxyReq, req: any, res) => {
+      if (req.user) {
+        proxyReq.setHeader('X-User-Id', req.user.userId || '');
+        proxyReq.setHeader('X-User-Role', req.user.role || '');
+        proxyReq.setHeader('X-User-Email', req.user.email || '');
+      }
+      fixRequestBody(proxyReq, req);
+      logger.info('Proxy vers backend legacy', {
+        path: req.path,
+        method: req.method,
+        target: config.services.backend,
+      });
+    },
+    onError: (err, req, res) => {
+      logger.error('Erreur proxy backend legacy', {
+        error: err.message,
+        path: req.url,
+      });
+      res.status(502).json({
+        success: false,
+        message: 'Service backend indisponible',
+      });
+    },
+  })
+);
+
 // Route de santé du gateway
 router.get('/health', (req, res) => {
   res.json({
@@ -153,6 +238,8 @@ router.get('/health', (req, res) => {
     services: {
       user: config.services.user,
       caisse: config.services.caisse,
+      backend: config.services.backend,
+      comptes: config.services.comptes,
     },
   });
 });

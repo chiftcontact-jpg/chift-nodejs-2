@@ -3,7 +3,9 @@
 import { useAuthStore } from '../store/authStore'
 
 // Configuration de l'URL du Gateway
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:3000/api'
+// En production sur Vercel, on utilise VITE_API_URL configuré sur Railway
+// En développement local, on utilise le proxy Vite (/api)
+const GATEWAY_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_GATEWAY_URL || '/api'
 
 console.log('🔧 Gateway URL configuré:', GATEWAY_URL)
 
@@ -30,19 +32,32 @@ const fetchAPI = async (endpoint: string, options: RequestInit = {}) => {
 
     console.log('📬 Réponse status:', response.status)
 
+    // Vérifier si la réponse a du contenu avant de tenter de parser du JSON
+    const contentType = response.headers.get('content-type')
+    let data: any = null
+    
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text()
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch (e) {
+          console.error('❌ Erreur parsing JSON:', e)
+        }
+      }
+    }
+
     if (response.status === 401) {
-      const errorData = await response.json()
-      console.error('❌ 401 Unauthorized:', errorData)
+      console.error('❌ 401 Unauthorized:', data)
       useAuthStore.getState().logout()
       window.location.href = '/login'
       throw new Error('Non autorisé')
     }
 
-    const data = await response.json()
     console.log('✅ Données reçues:', data)
     
     if (!response.ok) {
-      throw new Error(data.message || 'Erreur API')
+      throw new Error(data?.message || `Erreur API (${response.status})`)
     }
 
     return { data }
@@ -165,7 +180,7 @@ export const userAPI = {
     role: UserRole
     caisseId?: string
     referenceId?: string
-    referenceModel?: 'Agent' | 'Maker' | 'Adherent'
+    referenceModel?: 'Agent' | 'Maker' | 'Utilisateur'
   }) => fetchAPI(`/users/${userId}/roles`, {
     method: 'POST',
     body: JSON.stringify(role),
@@ -173,6 +188,41 @@ export const userAPI = {
   
   removeRole: (userId: string, roleIndex: number) => 
     fetchAPI(`/users/${userId}/roles/${roleIndex}`, { method: 'DELETE' }),
+}
+
+// API Comptes et Services (via Gateway -> Comptes Service)
+export const comptesAPI = {
+  // Récupérer tous les comptes de l'utilisateur
+  getAll: () => fetchAPI('/comptes'),
+  
+  // Récupérer un compte par ID
+  getById: (id: string) => fetchAPI(`/comptes/${id}`),
+  
+  // Créer un compte
+  create: (compteData: any) => fetchAPI('/comptes', {
+    method: 'POST',
+    body: JSON.stringify(compteData),
+  }),
+
+  // Mettre à jour le statut d'un compte
+  updateStatus: (id: string, statut: string) => fetchAPI(`/comptes/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ statut }),
+  }),
+}
+
+export const servicesAPI = {
+  // Récupérer tous les services de l'utilisateur
+  getAll: () => fetchAPI('/comptes/services'),
+  
+  // Récupérer un service par ID
+  getById: (id: string) => fetchAPI(`/comptes/services/${id}`),
+  
+  // Créer un service
+  create: (serviceData: any) => fetchAPI('/comptes/services', {
+    method: 'POST',
+    body: JSON.stringify(serviceData),
+  }),
 }
 
 // Import des types pour l'API
@@ -275,4 +325,17 @@ export const agentAPI = {
 };
 
 // Export par défaut de fetchAPI pour compatibilité
-export default fetchAPI
+// Fournit une interface compatible "axios" utilisée par les pages
+const api = {
+  get: (endpoint: string, options: RequestInit = {}) => fetchAPI(endpoint, { ...options, method: 'GET' }),
+  post: (endpoint: string, data?: any, options: RequestInit = {}) =>
+    fetchAPI(endpoint, { ...options, method: 'POST', body: data !== undefined ? JSON.stringify(data) : undefined }),
+  put: (endpoint: string, data?: any, options: RequestInit = {}) =>
+    fetchAPI(endpoint, { ...options, method: 'PUT', body: data !== undefined ? JSON.stringify(data) : undefined }),
+  patch: (endpoint: string, data?: any, options: RequestInit = {}) =>
+    fetchAPI(endpoint, { ...options, method: 'PATCH', body: data !== undefined ? JSON.stringify(data) : undefined }),
+  delete: (endpoint: string, data?: any, options: RequestInit = {}) =>
+    fetchAPI(endpoint, { ...options, method: 'DELETE', body: data !== undefined ? JSON.stringify(data) : undefined }),
+}
+
+export default api

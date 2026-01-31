@@ -1,52 +1,47 @@
 import Caisse from '../models/Caisse';
 import logger from '../utils/logger';
+import { REGIONS_CODES, DEPARTEMENTS_CODES } from '../utils/geoCodes';
 
 export class CaisseService {
-  // Générer un code unique pour la caisse
-  private async generateCaisseCode(type: string, region: string): Promise<string> {
-    const prefix = type === 'LEKKET' ? 'LEK' : 'CLS';
-    const regionCode = region.substring(0, 3).toUpperCase();
+  // Générer un code unique pour la caisse selon la nouvelle codification
+  private async generateCaisseCode(data: any): Promise<string> {
+    const { type, region, departement, commune } = data;
     
-    // Trouver le dernier numéro utilisé pour ce préfixe
-    const pattern = new RegExp(`^${prefix}-${regionCode}-(\\d+)$`);
-    const lastCaisse = await Caisse.findOne({ 
-      code: pattern 
-    })
-      .sort({ code: -1 })
-      .limit(1)
-      .lean();
+    const regionKey = (region || '').toUpperCase();
+    const deptKey = (departement || '').toUpperCase();
     
-    let nextNumber = 1;
-    if (lastCaisse && lastCaisse.code) {
-      const match = lastCaisse.code.match(pattern);
-      if (match && match[1]) {
-        nextNumber = parseInt(match[1], 10) + 1;
-      }
-    }
+    const rCode = REGIONS_CODES[regionKey as keyof typeof REGIONS_CODES] || '0';
+    const dCode = DEPARTEMENTS_CODES[deptKey as keyof typeof DEPARTEMENTS_CODES] || '000';
     
-    // En cas de collision, essayer les numéros suivants
-    let code = `${prefix}-${regionCode}-${String(nextNumber).padStart(4, '0')}`;
-    let attempts = 0;
-    const maxAttempts = 100;
+    // Pour la commune, on va chercher le nombre de caisses existantes dans cette commune
+    const communePrefix = commune ? commune.substring(0, 3).toUpperCase() : 'XXX';
     
-    while (attempts < maxAttempts) {
-      const exists = await Caisse.findOne({ code }).lean();
-      if (!exists) {
-        return code;
-      }
-      nextNumber++;
-      code = `${prefix}-${regionCode}-${String(nextNumber).padStart(4, '0')}`;
-      attempts++;
-    }
+    // Trouver le nombre de caisses dans cette région, département et commune pour l'ordre d'arrivée
+    const count = await Caisse.countDocuments({
+      region: region,
+      departement: departement,
+      commune: commune
+    });
     
-    // Si on arrive ici, générer un code avec timestamp pour garantir l'unicité
-    const timestamp = Date.now().toString().slice(-4);
-    return `${prefix}-${regionCode}-${timestamp}`;
+    const order = String(count + 1).padStart(3, '0');
+    
+    // Code format: TYPE-R-DEPT-COMM-ORDER (ex: CLS-1-101-DAK-001)
+    const typePrefix = type === 'LEKKET' ? 'LEK' : 'CLS';
+    return `${typePrefix}-${rCode}-${dCode}-${communePrefix}-${order}`;
   }
 
   // Créer une caisse
   async createCaisse(data: any) {
     try {
+      // Mapper les codes géographiques
+      data.regionCode = REGIONS_CODES[data.region.toUpperCase() as keyof typeof REGIONS_CODES] || '0';
+      data.departementCode = DEPARTEMENTS_CODES[data.departement.toUpperCase() as keyof typeof DEPARTEMENTS_CODES] || '000';
+      
+      // Générer le code si non fourni
+      if (!data.code) {
+        data.code = await this.generateCaisseCode(data);
+      }
+
       // Mapper montantCotisation vers montantMinimumCotisation si nécessaire
       if (data.montantCotisation !== undefined && data.montantMinimumCotisation === undefined) {
         data.montantMinimumCotisation = data.montantCotisation;
@@ -56,14 +51,6 @@ export class CaisseService {
       // Valeur par défaut pour montantMinimumCotisation si non fourni
       if (data.montantMinimumCotisation === undefined) {
         data.montantMinimumCotisation = 0;
-      }
-      
-      // Générer le code si non fourni
-      if (!data.code) {
-        data.code = await this.generateCaisseCode(
-          data.type || 'CLASSIQUE',
-          data.region
-        );
       }
       
       const caisse = await Caisse.create(data);

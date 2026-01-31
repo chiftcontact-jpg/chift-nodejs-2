@@ -9,7 +9,7 @@ const app: Application = express();
 
 // Middleware CORS
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3046', 'http://localhost:3047', 'http://localhost:3000'],
+  origin: process.env.CORS_ORIGIN?.split(',') || ['http://192.168.1.21:3046', 'http://localhost:3046', 'http://localhost:3047', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id', 'X-User-Role', 'X-User-Email'],

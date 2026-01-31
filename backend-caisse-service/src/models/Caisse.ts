@@ -9,9 +9,12 @@ export interface ICaisse extends Document {
   
   // Localisation
   region: string;
+  regionCode?: string;
   departement: string;
+  departementCode?: string;
   arrondissement?: string;
   commune: string;
+  communeCode?: string;
   adresse?: string;
   
   // Informations financières
@@ -85,9 +88,15 @@ const CaisseSchema = new Schema<ICaisse>(
       type: String,
       required: true
     },
+    regionCode: {
+      type: String
+    },
     departement: {
       type: String,
       required: true
+    },
+    departementCode: {
+      type: String
     },
     arrondissement: {
       type: String
@@ -95,6 +104,9 @@ const CaisseSchema = new Schema<ICaisse>(
     commune: {
       type: String,
       required: true
+    },
+    communeCode: {
+      type: String
     },
     adresse: {
       type: String

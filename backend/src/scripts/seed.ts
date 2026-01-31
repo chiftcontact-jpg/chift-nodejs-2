@@ -32,7 +32,7 @@ const seedDatabase = async () => {
           'gestion_caisses',
           'gestion_reseaux',
           'gestion_communautes',
-          'gestion_adherents',
+          'gestion_utilisateurs',
           'gestion_souscriptions',
           'gestion_comptes',
           'gestion_services',
@@ -71,7 +71,7 @@ const seedDatabase = async () => {
         numeroAgent: 'AG-2024-001',
         dateEnrolement: new Date(),
         maitriseChift: true,
-        nombreAdhérentsRecrutés: 0,
+        nombreUtilisateursRecrutés: 0,
         services: {
           leket: { actif: true, dateActivation: new Date() },
           sokhla: { actif: true, dateActivation: new Date() },
@@ -102,7 +102,7 @@ const seedDatabase = async () => {
         referenceId: demoAgent._id,
         referenceModel: 'Agent',
         permissions: [
-          'gestion_adherents',
+          'gestion_utilisateurs',
           'gestion_souscriptions',
           'consultation_caisses',
           'gestion_sokhla'

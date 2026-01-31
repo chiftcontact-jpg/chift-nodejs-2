@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installer les dépendances
-RUN npm ci
+RUN npm install
 
 # Copier le reste du code
 COPY . .
@@ -15,4 +15,4 @@ COPY . .
 EXPOSE 3046
 
 # Commande par défaut
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["npm", "run", "dev"]

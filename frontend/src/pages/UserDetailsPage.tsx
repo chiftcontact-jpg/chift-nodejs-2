@@ -15,7 +15,13 @@ import {
   Briefcase,
   Users,
   Edit2,
-  Trash2
+  Trash2,
+  MapPin,
+  Heart,
+  Droplets,
+  Zap,
+  Activity,
+  UserPlus
 } from 'lucide-react';
 import { userAPI } from '../lib/api';
 import type { User as UserType } from '../store/authStore';
@@ -46,7 +52,7 @@ export const UserDetailsPage: React.FC = () => {
         setUser(response.data.data);
       }
     } catch (error) {
-      console.error('Erreur chargement utilisateur:', error);
+      console.error('Erreur chargement adhérent:', error);
     } finally {
       setLoading(false);
     }
@@ -76,7 +82,7 @@ export const UserDetailsPage: React.FC = () => {
 
     const link = document.createElement('a');
     link.href = qrCode;
-    link.download = `qrcode-${user?.username || 'utilisateur'}.png`;
+    link.download = `qrcode-${user?.username || 'adherent'}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -93,11 +99,11 @@ export const UserDetailsPage: React.FC = () => {
     try {
       setDeleting(true);
       await userAPI.delete(id);
-      alert('✅ Utilisateur supprimé avec succès');
+      alert('✅ Adhérent supprimé avec succès');
       navigate('/utilisateurs');
     } catch (error: any) {
-      console.error('Erreur suppression utilisateur:', error);
-      alert('❌ Erreur: ' + (error.response?.data?.message || 'Impossible de supprimer l\'utilisateur'));
+      console.error('Erreur suppression adhérent:', error);
+      alert('❌ Erreur: ' + (error.response?.data?.message || 'Impossible de supprimer l\'adhérent'));
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
@@ -107,17 +113,29 @@ export const UserDetailsPage: React.FC = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
       case 'AGENT':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'MAKER':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'ADHERENT':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'SUPERVISEUR':
-        return 'bg-cyan-100 text-cyan-700 border-cyan-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'MAKER':
+        return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'UTILISATEUR':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'ADMIN': return 'Administrateur';
+      case 'AGENT': return 'Agent';
+      case 'MAKER': return 'Maker';
+      case 'UTILISATEUR':
+      case 'ADHERENT': return 'Adhérent';
+      case 'SUPERVISEUR': return 'Superviseur';
+      default: return role;
     }
   };
 
@@ -125,21 +143,21 @@ export const UserDetailsPage: React.FC = () => {
     switch (statut) {
       case 'actif':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 border border-green-200">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 border border-green-200 shadow-sm">
             <CheckCircle className="w-4 h-4" />
             Actif
           </span>
         );
       case 'inactif':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm">
             <XCircle className="w-4 h-4" />
             Inactif
           </span>
         );
       case 'suspendu':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 border border-red-200">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 border border-red-200 shadow-sm">
             <XCircle className="w-4 h-4" />
             Suspendu
           </span>
@@ -164,7 +182,7 @@ export const UserDetailsPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">Utilisateur non trouvé</p>
+          <p className="text-gray-600 mb-4">Adhérent non trouvé</p>
           <button
             onClick={() => navigate('/utilisateurs')}
             className="text-teal-600 hover:text-teal-700"
@@ -189,7 +207,7 @@ export const UserDetailsPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Détails de l'utilisateur</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Détails de l'adhérent</h1>
               <p className="text-sm text-gray-500 mt-1">Informations complètes du profil</p>
             </div>
           </div>
@@ -209,9 +227,16 @@ export const UserDetailsPage: React.FC = () => {
               Supprimer
             </button>
             <button
+              onClick={() => navigate('/comptes-services')}
+              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors shadow-md"
+            >
+              <Briefcase className="w-5 h-5" />
+              Voir les comptes et services CHIFT
+            </button>
+            <button
               onClick={handleGenerateQRCode}
               disabled={loadingQR}
-              className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors shadow-lg disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors shadow-md disabled:opacity-50"
             >
               <QrCode className="w-5 h-5" />
               {loadingQR ? 'Génération...' : 'Voir QR Code'}
@@ -224,21 +249,34 @@ export const UserDetailsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Colonne gauche - Info principale */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
               <div className="text-center mb-6">
-                <div className="w-24 h-24 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full mx-auto flex items-center justify-center text-white text-3xl font-bold mb-4">
+                <div className="w-24 h-24 bg-gradient-to-br from-teal-400 to-teal-600 rounded-full mx-auto flex items-center justify-center text-white text-3xl font-bold mb-4 shadow-lg">
                   {user.prenom[0]}{user.nom[0]}
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">{user.prenom} {user.nom}</h2>
+                <p className="text-[11px] text-teal-600 font-bold mt-1 uppercase tracking-wider">{user.codeUtilisateur || 'CODE EN ATTENTE'}</p>
                 <p className="text-sm text-gray-500 mt-1">@{user.username}</p>
-                <div className="mt-3">
+                <div className="mt-3 flex flex-wrap justify-center gap-2">
                   {getStatusBadge(user.statut)}
+                  {(user as any).leket?.souscrit && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700 border border-purple-200 shadow-sm">
+                      <Zap className="w-4 h-4" />
+                      LEKET
+                    </span>
+                  )}
+                  {(user as any).csu?.actif && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700 border border-blue-200 shadow-sm">
+                      <Heart className="w-4 h-4" />
+                      CSU
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="border-t border-gray-200 pt-4 space-y-4">
                 <div className="flex items-center gap-3 text-gray-700">
-                  <Mail className="w-5 h-5 text-gray-400" />
+                  <Mail className="w-5 h-5 text-teal-500" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-500">Email</p>
                     <p className="text-sm font-medium truncate">{user.email}</p>
@@ -246,16 +284,53 @@ export const UserDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3 text-gray-700">
-                  <Phone className="w-5 h-5 text-gray-400" />
+                  <Phone className="w-5 h-5 text-teal-500" />
                   <div className="flex-1">
                     <p className="text-xs text-gray-500">Téléphone</p>
                     <p className="text-sm font-medium">{user.telephone}</p>
                   </div>
                 </div>
 
+                <div className="flex items-center gap-3 text-gray-700">
+                  <MapPin className="w-5 h-5 text-teal-500" />
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500">Localisation</p>
+                    <p className="text-sm font-medium">
+                      {(user as any).commune}, {(user as any).departement}, {(user as any).region}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">{(user as any).adresse}</p>
+                  </div>
+                </div>
+
+                {(user as any).groupeSanguin && (
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Droplets className="w-5 h-5 text-red-500" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Groupe Sanguin</p>
+                      <p className="text-sm font-medium">{(user as any).groupeSanguin}</p>
+                    </div>
+                  </div>
+                )}
+
+                {(user as any).dateNaissance && (
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Calendar className="w-5 h-5 text-teal-500" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Date de Naissance</p>
+                      <p className="text-sm font-medium">
+                        {new Date((user as any).dateNaissance).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {user.whatsapp && (
                   <div className="flex items-center gap-3 text-gray-700">
-                    <Phone className="w-5 h-5 text-gray-400" />
+                    <Phone className="w-5 h-5 text-green-500" />
                     <div className="flex-1">
                       <p className="text-xs text-gray-500">WhatsApp</p>
                       <p className="text-sm font-medium">{user.whatsapp}</p>
@@ -265,7 +340,7 @@ export const UserDetailsPage: React.FC = () => {
 
                 {user.createdAt && (
                   <div className="flex items-center gap-3 text-gray-700">
-                    <Calendar className="w-5 h-5 text-gray-400" />
+                    <Calendar className="w-5 h-5 text-teal-500" />
                     <div className="flex-1">
                       <p className="text-xs text-gray-500">Créé le</p>
                       <p className="text-sm font-medium">
@@ -281,7 +356,7 @@ export const UserDetailsPage: React.FC = () => {
 
                 {user.derniereConnexion && (
                   <div className="flex items-center gap-3 text-gray-700">
-                    <Clock className="w-5 h-5 text-gray-400" />
+                    <Clock className="w-5 h-5 text-teal-500" />
                     <div className="flex-1">
                       <p className="text-xs text-gray-500">Dernière connexion</p>
                       <p className="text-sm font-medium">
@@ -302,24 +377,113 @@ export const UserDetailsPage: React.FC = () => {
 
           {/* Colonne droite - Détails étendus */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Souscription LEKET */}
+            {(user as any).leket?.souscrit && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-purple-600" />
+                  Souscription LEKET
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    <p className="text-xs text-purple-600 mb-1">Cotisation</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {(user as any).leket.montantPart} FCFA / part
+                    </p>
+                    <p className="text-xs text-gray-500">{(user as any).leket.nombreParts} part(s) souscrite(s)</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    <p className="text-xs text-purple-600 mb-1">Fréquence</p>
+                    <p className="text-sm font-bold text-gray-900">{(user as any).leket.jourCotisation}</p>
+                    <p className="text-xs text-gray-500">Tous les {(user as any).leket.jourCotisation}s</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                    <p className="text-xs text-purple-600 mb-1">Événement Butoir</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {(user as any).leket.evenementButoir?.mois} {(user as any).leket.evenementButoir?.annee}
+                    </p>
+                    <p className="text-xs text-red-600 font-medium">Récupération: {(user as any).leket.dateRecuperation ? new Date((user as any).leket.dateRecuperation).toLocaleDateString('fr-FR') : 'Non définie'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Couverture Sanitaire Universelle */}
+            {(user as any).csu?.actif && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-blue-600" />
+                  Couverture Sanitaire Universelle (CSU)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-xs text-blue-600 mb-1">Numéro CSU</p>
+                    <p className="text-sm font-bold text-gray-900">{(user as any).csu.numeroCSU || 'Génération en cours...'}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <p className="text-xs text-blue-600 mb-1">Bénéficiaires</p>
+                    <p className="text-sm font-bold text-gray-900">{(user as any).csu.nombreBeneficiaires || 0} personne(s) couverte(s)</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {(user as any).csu.options?.findMedecin && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Médecin attitré</span>
+                  )}
+                  {(user as any).csu.options?.findPharmacie && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Pharmacie de proximité</span>
+                  )}
+                  {(user as any).csu.options?.lettreGarantie && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">Lettre de garantie</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Détails Adhésion */}
+            {(user as any).adhesion && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-teal-600" />
+                  Détails de l'Adhésion
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                    <p className="text-xs text-teal-600 mb-1">Date d'adhésion</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {(user as any).adhesion.dateAdhesion ? new Date((user as any).adhesion.dateAdhesion).toLocaleDateString('fr-FR') : 'Non renseignée'}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                    <p className="text-xs text-teal-600 mb-1">MSD de rattachement</p>
+                    <p className="text-sm font-bold text-gray-900">{(user as any).adhesion.nomMSD || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">{(user as any).adhesion.communeMSD}</p>
+                  </div>
+                  <div className="p-4 bg-teal-50 rounded-lg border border-teal-100">
+                    <p className="text-xs text-teal-600 mb-1">N° Adhésion MSD</p>
+                    <p className="text-sm font-bold text-gray-900">{(user as any).adhesion.numeroAdhesionMSD || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Identité */}
             {(user.cni || user.profession) && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-teal-600" />
                   Identité
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {user.cni && (
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                       <p className="text-xs text-gray-500 mb-1">Numéro CNI</p>
                       <p className="text-sm font-semibold text-gray-900">{user.cni}</p>
                     </div>
                   )}
                   {user.profession && (
-                    <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                       <div className="flex items-center gap-2 mb-1">
-                        <Briefcase className="w-4 h-4 text-gray-400" />
+                        <Briefcase className="w-4 h-4 text-teal-500" />
                         <p className="text-xs text-gray-500">Profession</p>
                       </div>
                       <p className="text-sm font-semibold text-gray-900">{user.profession}</p>
@@ -331,27 +495,27 @@ export const UserDetailsPage: React.FC = () => {
 
             {/* Bénéficiaires */}
             {user.beneficiaires && user.beneficiaires.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Users className="w-5 h-5 text-teal-600" />
                   Bénéficiaires ({user.beneficiaires.length})
                 </h3>
                 <div className="space-y-3">
                   {user.beneficiaires.map((beneficiaire, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900">
                             {beneficiaire.prenom} {beneficiaire.nom}
                           </p>
                           <p className="text-sm text-gray-600 mt-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-100 text-teal-800 border border-teal-200">
                               {beneficiaire.relation}
                             </span>
                           </p>
                           {beneficiaire.telephone && (
                             <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-                              <Phone className="w-4 h-4" />
+                              <Phone className="w-4 h-4 text-teal-500" />
                               {beneficiaire.telephone}
                             </div>
                           )}
@@ -364,7 +528,7 @@ export const UserDetailsPage: React.FC = () => {
             )}
 
             {/* Rôles */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-teal-600" />
                 Rôles et Permissions
@@ -372,9 +536,9 @@ export const UserDetailsPage: React.FC = () => {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Rôle principal</p>
-                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border ${getRoleBadgeColor(user.rolePrincipal)}`}>
+                  <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border ${getRoleBadgeColor(user.rolePrincipal)} shadow-sm`}>
                     <Shield className="w-4 h-4" />
-                    {user.rolePrincipal}
+                    {getRoleLabel(user.rolePrincipal)}
                   </span>
                 </div>
 
@@ -385,13 +549,13 @@ export const UserDetailsPage: React.FC = () => {
                       {user.roles.map((roleDetail, index) => (
                         <span
                           key={index}
-                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border ${getRoleBadgeColor(roleDetail.role)}`}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border ${getRoleBadgeColor(roleDetail.role)} shadow-sm`}
                         >
-                          {roleDetail.role}
+                          {getRoleLabel(roleDetail.role)}
                           {roleDetail.actif ? (
-                            <CheckCircle className="w-3 h-3" />
+                            <CheckCircle className="w-3 h-3 text-green-500" />
                           ) : (
-                            <XCircle className="w-3 h-3" />
+                            <XCircle className="w-3 h-3 text-gray-400" />
                           )}
                         </span>
                       ))}
@@ -406,7 +570,7 @@ export const UserDetailsPage: React.FC = () => {
                       {user.permissions.map((permission, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200"
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100"
                         >
                           {permission}
                         </span>

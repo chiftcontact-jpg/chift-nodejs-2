@@ -44,7 +44,7 @@ export const AdminLayout: React.FC = () => {
 
             {/* User profile */}
             <button 
-              onClick={() => navigate('/profil-admin')}
+              onClick={() => navigate('/mon-profil')}
               className="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2 transition-colors"
             >
               <span className="text-sm text-gray-600 hidden sm:block">

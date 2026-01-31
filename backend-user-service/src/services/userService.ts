@@ -5,41 +5,141 @@ import { generateToken, generateRefreshToken } from '../utils/jwt';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../utils/logger';
 import axios from 'axios';
+import { REGIONS_CODES, DEPARTEMENTS_CODES } from '../utils/geoCodes';
 
 export class UserService {
+  // Générer un code utilisateur unique
+  private async generateUserCode(userData: any): Promise<{ code: string; order: number }> {
+    const { region, departement, commune } = userData;
+    
+    const regionKey = (region || '').toUpperCase();
+    const deptKey = (departement || '').toUpperCase();
+    
+    const rCode = REGIONS_CODES[regionKey as keyof typeof REGIONS_CODES] || '0';
+    const dCode = DEPARTEMENTS_CODES[deptKey as keyof typeof DEPARTEMENTS_CODES] || '000';
+    const communePrefix = commune ? commune.substring(0, 3).toUpperCase() : 'XXX';
+    
+    // Trouver l'ordre d'enrôlement dans la même zone géographique
+    const count = await User.countDocuments({
+      region: region,
+      departement: departement,
+      commune: commune
+    });
+    
+    const order = count + 1;
+    const orderStr = String(order).padStart(4, '0');
+    
+    // Format: USR-R-DEPT-COMM-ORDER (ex: USR-1-101-DAK-0001)
+    const code = `USR-${rCode}-${dCode}-${communePrefix}-${orderStr}`;
+    
+    return { code, order };
+  }
+
   // Créer un utilisateur
-  async createUser(userData: Partial<IUser>): Promise<IUser> {
+  async createUser(userData: any): Promise<IUser> {
     try {
       // Vérifier si l'utilisateur existe déjà
       const existingUser = await User.findOne({
-        $or: [{ email: userData.email }, { username: userData.username }]
+        $or: [{ email: userData.email }, { username: userData.username || userData.email }]
       });
 
       if (existingUser) {
         throw new AppError('Email ou nom d\'utilisateur déjà utilisé', 400);
       }
 
-      // Générer un mot de passe temporaire et un token de réinitialisation
-      const tempPassword = crypto.randomBytes(32).toString('hex');
-      userData.password = await bcrypt.hash(tempPassword, 10);
+      // Préparer les données pour le modèle User
+      const preparedData: any = {
+        ...userData,
+        username: userData.username || userData.email,
+        rolePrincipal: userData.role || 'UTILISATEUR',
+      };
+
+      // Si c'est un utilisateur simple, on peut lui ajouter le rôle dans la liste des rôles
+      if (!preparedData.roles) {
+        preparedData.roles = [{
+          role: preparedData.rolePrincipal,
+          dateAttribution: new Date(),
+          actif: true
+        }];
+      }
+
+      // Gérer les dates (conversion string -> Date si nécessaire)
+      if (typeof preparedData.dateNaissance === 'string') {
+        preparedData.dateNaissance = new Date(preparedData.dateNaissance);
+      }
+      if (preparedData.adhesion && typeof preparedData.adhesion.date === 'string') {
+        preparedData.adhesion.date = new Date(preparedData.adhesion.date);
+      }
+
+      // Gérer la date de récupération LEKET
+      if (preparedData.leket && preparedData.leket.souscrit && preparedData.leket.evenementButoir) {
+        const { mois, annee } = preparedData.leket.evenementButoir;
+        const joursAvant = preparedData.leket.joursAvantButoir || 1;
+        
+        // Convertir le nom du mois en index (0-11)
+        const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        const moisIndex = moisNoms.indexOf(mois);
+        
+        if (moisIndex !== -1 && annee) {
+          // Date butoir (dernier jour du mois choisi)
+          const dateButoir = new Date(parseInt(annee), moisIndex + 1, 0);
+          // Date de récupération (X jours avant)
+          const dateRecuperation = new Date(dateButoir);
+          dateRecuperation.setDate(dateButoir.getDate() - joursAvant);
+          preparedData.leket.dateRecuperation = dateRecuperation;
+        } else {
+          preparedData.leket.dateRecuperation = new Date();
+        }
+      }
+
+      // Gérer les bénéficiaires (mapping frontend -> backend)
+      if (preparedData.beneficiaires && Array.isArray(preparedData.beneficiaires)) {
+        preparedData.beneficiaires = preparedData.beneficiaires.map((b: any) => ({
+          nom: b.nom,
+          prenom: b.prenom,
+          relation: b.lienParente || b.relation,
+          telephone: b.telephone
+        }));
+      }
+
+      // Gérer l'adhésion et la codification
+      if (!preparedData.adhesion) {
+        preparedData.adhesion = {};
+      }
+
+      const { code, order } = await this.generateUserCode(preparedData);
+      preparedData.adhesion.codeUtilisateur = code;
+      preparedData.adhesion.ordreEnrolement = order;
+
+      // Générer un mot de passe temporaire par défaut
+      const defaultPassword = "Chift" + Math.random().toString(36).substring(2, 8).toUpperCase() + "!";
+      preparedData.password = await bcrypt.hash(defaultPassword, 10);
+      preparedData.mustChangePassword = true;
       
       // Générer le token de réinitialisation (valide 7 jours)
       const resetToken = crypto.randomBytes(32).toString('hex');
-      userData.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-      userData.resetPasswordExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
+      preparedData.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+      preparedData.resetPasswordExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 jours
 
-      const user = new User(userData);
+      const user = new User(preparedData);
       await user.save();
 
       logger.info(`Utilisateur créé: ${user.email}`);
 
-      // Envoyer l'email de bienvenue avec le lien de réinitialisation
+      // Envoyer l'email de bienvenue avec le lien de réinitialisation et les accès par défaut
       try {
-        const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3046'}/set-password?token=${resetToken}`;
+        const resetUrl = `${process.env.FRONTEND_URL || 'http://192.168.1.21:3046'}/set-password?token=${resetToken}`;
+        const loginUrl = `${process.env.FRONTEND_URL || 'http://192.168.1.21:3046'}/login`;
         
-        await axios.post('http://localhost:3052/api/mail/send/welcome', {
+        await axios.post('http://mail-service:3052/api/mail/send/welcome', {
           to: user.email,
           name: `${user.prenom} ${user.nom}`,
+          role: user.rolePrincipal,
+          credentials: {
+            email: user.email,
+            password: defaultPassword
+          },
+          loginUrl,
           resetUrl
         });
         
@@ -76,7 +176,9 @@ export class UserService {
       }
 
       // Vérifier le mot de passe
+      logger.debug(`Comparaison du mot de passe pour ${email}`);
       const isPasswordValid = await bcrypt.compare(password, user.password);
+      logger.debug(`Résultat comparaison pour ${email}: ${isPasswordValid}`);
 
       if (!isPasswordValid) {
         // Incrémenter les tentatives
@@ -102,7 +204,8 @@ export class UserService {
         userId: user._id.toString(),
         email: user.email,
         role: user.rolePrincipal,
-        roles: user.roles
+        roles: user.roles,
+        mustChangePassword: user.mustChangePassword
       };
 
       const token = generateToken(tokenPayload);
@@ -289,6 +392,7 @@ export class UserService {
 
       // Mettre à jour le mot de passe
       user.password = hashedPassword;
+      user.mustChangePassword = false;
       await user.save();
 
       logger.info(`Mot de passe mis à jour: ${user.email}`);
@@ -327,7 +431,11 @@ export class UserService {
         telephone: user.telephone,
         role: user.rolePrincipal,
         organisation: undefined, // Peut être étendu si nécessaire
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        codeUtilisateur: user.adhesion?.codeUtilisateur,
+        adhesion: user.adhesion,
+        leket: user.leket,
+        csu: user.csu
       });
 
       // Sauvegarder le QR code dans la base de données
@@ -416,6 +524,7 @@ export class UserService {
       user.password = await bcrypt.hash(newPassword, 10);
       user.resetPasswordToken = undefined;
       user.resetPasswordExpires = undefined;
+      user.mustChangePassword = false;
       user.statut = 'actif'; // Activer le compte
       
       await user.save();

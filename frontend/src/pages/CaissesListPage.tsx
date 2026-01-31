@@ -224,8 +224,26 @@ export const CaissesListPage: React.FC = () => {
                 />
               </div>
 
-              {/* Filtres avec icônes */}
+              {/* Localisation Filter */}
               <div className="flex gap-3">
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select
+                    className="appearance-none pl-9 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'all') setSearchQuery('');
+                      else setSearchQuery(val);
+                    }}
+                  >
+                    <option value="all">🌍 Toutes régions</option>
+                    <option value="Dakar">Dakar</option>
+                    <option value="Thiès">Thiès</option>
+                    <option value="Diourbel">Diourbel</option>
+                    <option value="Saint-Louis">Saint-Louis</option>
+                    <option value="Kaolack">Kaolack</option>
+                  </select>
+                </div>
                 <div className="relative">
                   <select
                     value={typeFilter}

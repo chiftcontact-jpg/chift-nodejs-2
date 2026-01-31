@@ -14,22 +14,28 @@ import { errorHandler, notFound } from './middlewares/errorHandler';
 
 const app = express();
 
-// Middlewares de sécurité
-app.use(helmet());
+// Log de bas niveau pour debugger les requêtes entrantes
+app.use((req, res, next) => {
+  logger.info(`📥 [DEBUG] Requête reçue: ${req.method} ${req.url}`, {
+    ip: req.ip,
+    origin: req.get('origin'),
+    userAgent: req.get('user-agent')
+  });
+  next();
+});
 
-// Configuration CORS détaillée
+// Logging en premier pour tout voir
+app.use(requestLogger);
+
+// Middlewares de sécurité
+app.use(helmet({
+  contentSecurityPolicy: false, // Désactiver CSP pour le test
+}));
+
+// Configuration CORS plus permissive pour le diagnostic
+const allowedOrigins = config.cors.origins;
 app.use(cors({
-  origin: function (origin, callback) {
-    // Permettre les requêtes sans origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (config.cors.origins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      logger.warn(`❌ Origine CORS refusée: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Autoriser toutes les origines pour le diagnostic
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id', 'X-User-Role', 'X-User-Email'],
@@ -54,9 +60,6 @@ app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging
-app.use(requestLogger);
-
 // Routes
 app.use('/api', routes);
 
@@ -76,6 +79,7 @@ const startServer = () => {
     logger.info('Services proxifiés:');
     logger.info(`  👤 User Service: ${config.services.user}`);
     logger.info(`  💰 Caisse Service: ${config.services.caisse}`);
+    logger.info(`  🏛️ Backend Legacy: ${config.services.backend}`);
     logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   });
 

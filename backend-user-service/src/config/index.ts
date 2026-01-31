@@ -43,11 +43,11 @@ const config: Config = {
   },
   
   cors: {
-    origins: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3046']
+    origins: process.env.CORS_ORIGIN?.split(',') || ['http://192.168.1.21:3046', 'http://localhost:3046']
   },
   
   logging: {
-    level: process.env.LOG_LEVEL || 'info'
+    level: process.env.LOG_LEVEL || 'debug'
   },
   
   apiGateway: {

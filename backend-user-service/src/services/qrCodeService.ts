@@ -10,6 +10,10 @@ interface UserQRData {
   role: string;
   organisation?: string;
   createdAt: Date;
+  codeUtilisateur?: string;
+  adhesion?: any;
+  leket?: any;
+  csu?: any;
 }
 
 class QRCodeService {
@@ -29,6 +33,10 @@ class QRCodeService {
         telephone: userData.telephone || '',
         role: userData.role,
         organisation: userData.organisation || '',
+        codeUtilisateur: userData.codeUtilisateur || '',
+        adhesion: userData.adhesion || null,
+        leket: userData.leket || null,
+        csu: userData.csu || null,
         createdAt: userData.createdAt.toISOString(),
         generatedAt: new Date().toISOString(),
       };

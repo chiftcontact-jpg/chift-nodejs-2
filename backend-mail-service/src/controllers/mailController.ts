@@ -6,7 +6,7 @@ export class MailController {
   // Envoyer un email de bienvenue
   async sendWelcome(req: Request, res: Response): Promise<void> {
     try {
-      const { to, name, resetUrl } = req.body;
+      const { to, name, resetUrl, role, credentials, loginUrl } = req.body;
 
       if (!to || !name) {
         res.status(400).json({
@@ -16,7 +16,7 @@ export class MailController {
         return;
       }
 
-      await mailService.sendWelcomeEmail(to, name, resetUrl);
+      await mailService.sendWelcomeEmail(to, name, resetUrl, role, credentials, loginUrl);
 
       res.status(200).json({
         success: true,

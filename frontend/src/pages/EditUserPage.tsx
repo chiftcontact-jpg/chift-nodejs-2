@@ -29,7 +29,7 @@ export const EditUserPage: React.FC = () => {
     whatsapp: '',
     cni: '',
     profession: '',
-    rolePrincipal: 'ADHERENT' as const,
+    rolePrincipal: 'UTILISATEUR' as const,
     statut: 'actif' as const,
   });
   const [beneficiaires, setBeneficiaires] = useState<Array<{
@@ -67,7 +67,7 @@ export const EditUserPage: React.FC = () => {
         setBeneficiaires(user.beneficiaires || []);
       }
     } catch (error) {
-      console.error('Erreur chargement utilisateur:', error);
+      console.error('Erreur chargement adhérent:', error);
       alert('Erreur lors du chargement des données');
     } finally {
       setLoading(false);
@@ -86,11 +86,11 @@ export const EditUserPage: React.FC = () => {
         beneficiaires: beneficiaires.filter(b => b.nom && b.prenom && b.relation)
       });
       
-      alert('✅ Utilisateur modifié avec succès');
+      alert('✅ Adhérent modifié avec succès');
       navigate(`/utilisateur/${id}`);
     } catch (error: any) {
-      console.error('Erreur modification utilisateur:', error);
-      alert('❌ Erreur: ' + (error.response?.data?.message || 'Impossible de modifier l\'utilisateur'));
+      console.error('Erreur modification adhérent:', error);
+      alert('❌ Erreur: ' + (error.response?.data?.message || 'Impossible de modifier l\'adhérent'));
     } finally {
       setSaving(false);
     }
@@ -138,7 +138,7 @@ export const EditUserPage: React.FC = () => {
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Modifier l'utilisateur</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Modifier l'adhérent</h1>
             <p className="text-sm text-gray-500 mt-1">Mettre à jour les informations</p>
           </div>
         </div>
@@ -295,11 +295,11 @@ export const EditUserPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   required
                 >
-                  <option value="ADMIN">ADMIN</option>
-                  <option value="AGENT">AGENT</option>
-                  <option value="SUPERVISEUR">SUPERVISEUR</option>
-                  <option value="MAKER">MAKER</option>
-                  <option value="ADHERENT">ADHERENT</option>
+                  <option value="ADMIN">Administrateur</option>
+                  <option value="AGENT">Agent</option>
+                  <option value="ADHERENT">Adhérent</option>
+                  <option value="SUPERVISEUR">Superviseur</option>
+                  <option value="MAKER">Maker</option>
                 </select>
               </div>
               <div>

@@ -4,8 +4,8 @@ import { useAuthStore } from '../store/authStore'
 import { LogIn } from 'lucide-react'
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('papseynidiakhate@gmail.com')
+  const [password, setPassword] = useState('1234')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   
@@ -21,19 +21,26 @@ const LoginPage = () => {
       // Appel API via le Gateway
       const { authAPI } = await import('../lib/api')
       const response = await authAPI.login(email, password)
+      console.log('Login success:', response)
       
       if (response.data.success) {
         const { user, token, refreshToken } = response.data.data
         login(user, token, refreshToken)
         
+        // Redirection forcée vers le changement de mot de passe si nécessaire
+        if (user.mustChangePassword) {
+          navigate('/mon-profil')
+          return
+        }
+
         // Redirection selon le rôle principal
         if (user.rolePrincipal === 'ADMIN') {
           navigate('/dashboard')
-        } else if (user.rolePrincipal === 'AGENT') {
+        } else if (user.rolePrincipal === 'AGENT' || user.rolePrincipal === 'SUPERVISEUR') {
           navigate('/profil-agent')
         } else if (user.rolePrincipal === 'MAKER') {
           navigate('/caisse-details') // Rediriger vers sa caisse
-        } else if (user.rolePrincipal === 'ADHERENT') {
+        } else if (user.rolePrincipal === 'UTILISATEUR') {
           navigate('/profil-membre')
         } else {
           navigate('/dashboard')
@@ -42,8 +49,8 @@ const LoginPage = () => {
         setError(response.data.message || 'Erreur de connexion')
       }
     } catch (err: any) {
-      console.error('Erreur login:', err)
-      const errorMessage = err.response?.data?.message || 'Identifiants invalides'
+      console.error('Login error:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Identifiants invalides'
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -90,21 +97,22 @@ const LoginPage = () => {
             </div>
 
             {/* Info box for demo credentials */}
-            {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm font-semibold text-blue-900 mb-2">Comptes de démonstration :</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-blue-900 mb-2">Accès Administrateur :</p>
               <div className="space-y-2 text-sm text-blue-800">
                 <div>
-                  <p className="font-medium">👨‍💼 Administrateur :</p>
-                  <p className="ml-4">Email: <code className="bg-blue-100 px-2 py-0.5 rounded">admin@chift.com</code></p>
-                  <p className="ml-4">Mot de passe: <code className="bg-blue-100 px-2 py-0.5 rounded">admin123</code></p>
+                  <p className="font-medium">👨‍💼 Super Admin (Image) :</p>
+                  <p className="ml-4">Email: <code className="bg-blue-100 px-2 py-0.5 rounded">papseynidiakhate@gmail.com</code></p>
+                  <p className="ml-4">Mot de passe: <code className="bg-blue-100 px-2 py-0.5 rounded">1234</code></p>
                 </div>
+                <hr className="border-blue-100" />
                 <div>
-                  <p className="font-medium">👤 Agent :</p>
-                  <p className="ml-4">Email: <code className="bg-blue-100 px-2 py-0.5 rounded">agent@chift.com</code></p>
-                  <p className="ml-4">Mot de passe: <code className="bg-blue-100 px-2 py-0.5 rounded">agent123</code></p>
+                  <p className="font-medium">👨‍💻 Admin Standard :</p>
+                  <p className="ml-4">Email: <code className="bg-blue-100 px-2 py-0.5 rounded">admin@chift.sn</code></p>
+                  <p className="ml-4">Mot de passe: <code className="bg-blue-100 px-2 py-0.5 rounded">Admin123!</code></p>
                 </div>
               </div>
-            </div> */}
+            </div>
 
             <button
               type="submit"

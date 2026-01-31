@@ -1,4 +1,4 @@
-export interface Adherent {
+export interface Utilisateur {
   _id: string
   nom: string
   prenom: string
@@ -12,8 +12,8 @@ export interface Adherent {
   dateNaissance: string
   profession?: string
   statut: 'actif' | 'inactif' | 'suspendu'
-  numeroAdherent: string
-  typeAdherent: 'communautaire' | 'individuel'
+  numeroUtilisateur: string
+  typeUtilisateur: 'communautaire' | 'individuel'
   compteChift: {
     numeroCompte: string
     solde: number
@@ -91,7 +91,7 @@ export interface EnrollmentFormData {
   commune: string
   
   // Type d'adhésion
-  typeAdherent: 'communautaire' | 'individuel'
+  typeUtilisateur: 'communautaire' | 'individuel'
   
   // Mécanisme endogène
   possedeMecanismeEndogene: boolean

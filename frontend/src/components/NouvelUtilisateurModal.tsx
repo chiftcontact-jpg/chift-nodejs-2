@@ -22,13 +22,41 @@ export interface UtilisateurFormData {
   nationalite: string;
   villeResidence: string;
   adresse: string;
+  region: string;
+  departement: string;
+  commune: string;
   dateNaissance: string;
   groupeSanguin: string;
   cni: string;
   niveauEducation: string;
   niveauEducationAutre: string;
   profession: string;
-  role: 'ADMIN' | 'AGENT' | 'MAKER' | 'ADHERENT' | 'SUPERVISEUR' | '';
+  role: 'ADMIN' | 'AGENT' | 'MAKER' | 'UTILISATEUR' | 'SUPERVISEUR' | '';
+  leket: {
+    souscrit: boolean;
+    jourCotisation: string;
+    montantParts: number;
+    nombreParts: number;
+    evenementButoir: {
+      mois: string;
+      annee: string;
+    };
+    joursAvantButoir: number;
+  };
+  csu: {
+    souscrit: boolean;
+    nombreBeneficiaires: number;
+    medecinTrouve: boolean;
+    pharmacieTrouvee: boolean;
+    lettreGarantie: boolean;
+    autres: string;
+  };
+  adhesion: {
+    date: string;
+    numero: string;
+    nomMSD: string;
+    communeMSD: string;
+  };
   beneficiaires: BeneficiaireFormData[];
 }
 
@@ -52,6 +80,9 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
     nationalite: '',
     villeResidence: '',
     adresse: '',
+    region: '',
+    departement: '',
+    commune: '',
     dateNaissance: '',
     groupeSanguin: '',
     cni: '',
@@ -59,6 +90,31 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
     niveauEducationAutre: '',
     profession: '',
     role: '',
+    leket: {
+      souscrit: false,
+      jourCotisation: '',
+      montantParts: 0,
+      nombreParts: 0,
+      evenementButoir: {
+        mois: '',
+        annee: ''
+      },
+      joursAvantButoir: 1
+    },
+    csu: {
+      souscrit: false,
+      nombreBeneficiaires: 0,
+      medecinTrouve: false,
+      pharmacieTrouvee: false,
+      lettreGarantie: false,
+      autres: ''
+    },
+    adhesion: {
+      date: new Date().toISOString().split('T')[0],
+      numero: '',
+      nomMSD: '',
+      communeMSD: ''
+    },
     beneficiaires: [createEmptyBeneficiaire()]
   });
 
@@ -68,6 +124,9 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
     'Identité',
     'Profession',
     'Bénéficiaires',
+    'LEKET',
+    'CSU',
+    'Adhésion',
     'Rôle'
   ];
   const [currentStep, setCurrentStep] = useState(0);
@@ -75,11 +134,39 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
   const isFirstStep = currentStep === 0;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type } = e.target;
+    const val = type === 'number' ? Number(value) : (type === 'checkbox' ? (e.target as HTMLInputElement).checked : value);
+    
+    if (name.includes('.')) {
+      const [parent, child, grandChild] = name.split('.');
+      setFormData(prev => {
+        if (grandChild) {
+          return {
+            ...prev,
+            [parent]: {
+              ...(prev[parent as keyof UtilisateurFormData] as any),
+              [child]: {
+                ...(prev[parent as keyof UtilisateurFormData] as any)[child],
+                [grandChild]: val
+              }
+            }
+          };
+        }
+        return {
+          ...prev,
+          [parent]: {
+            ...(prev[parent as keyof UtilisateurFormData] as any),
+            [child]: val
+          }
+        };
+      });
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: val
+      }));
+    }
+    
     // Clear error when user types
     if (errors[name as keyof UtilisateurFormData]) {
       setErrors(prev => ({
@@ -104,6 +191,21 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
     } else if (!/^[0-9+\s()-]+$/.test(formData.telephone)) {
       newErrors.telephone = 'Numéro invalide';
     }
+
+    // Validation LEKET
+    if (formData.leket.souscrit) {
+      if (!formData.leket.jourCotisation) (newErrors as any)['leket.jourCotisation'] = 'Le jour de cotisation est requis';
+      if (formData.leket.montantParts <= 0) (newErrors as any)['leket.montantParts'] = 'Le montant doit être supérieur à 0';
+      if (formData.leket.nombreParts <= 0) (newErrors as any)['leket.nombreParts'] = 'Le nombre de parts doit être supérieur à 0';
+      if (!formData.leket.evenementButoir.mois) (newErrors as any)['leket.evenementButoir.mois'] = 'Le mois est requis';
+      if (!formData.leket.evenementButoir.annee) (newErrors as any)['leket.evenementButoir.annee'] = 'L\'année est requise';
+    }
+
+    // Validation CSU
+    if (formData.csu.souscrit) {
+      if (formData.csu.nombreBeneficiaires < 0) (newErrors as any)['csu.nombreBeneficiaires'] = 'Le nombre ne peut pas être négatif';
+    }
+
     if (!formData.role) newErrors.role = 'Le rôle est requis';
 
     setErrors(newErrors);
@@ -123,6 +225,9 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
         nationalite: '',
         villeResidence: '',
         adresse: '',
+        region: '',
+        departement: '',
+        commune: '',
         dateNaissance: '',
         groupeSanguin: '',
         cni: '',
@@ -130,6 +235,31 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
         niveauEducationAutre: '',
         profession: '',
         role: '',
+        leket: {
+          souscrit: false,
+          jourCotisation: '',
+          montantParts: 0,
+          nombreParts: 0,
+          evenementButoir: {
+            mois: '',
+            annee: ''
+          },
+          joursAvantButoir: 1
+        },
+        csu: {
+          souscrit: false,
+          nombreBeneficiaires: 0,
+          medecinTrouve: false,
+          pharmacieTrouvee: false,
+          lettreGarantie: false,
+          autres: ''
+        },
+        adhesion: {
+          date: new Date().toISOString().split('T')[0],
+          numero: '',
+          nomMSD: '',
+          communeMSD: ''
+        },
         beneficiaires: [createEmptyBeneficiaire()]
       });
       setErrors({});
@@ -406,6 +536,74 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
                     />
                   </div>
                 </div>
+
+                {/* Région */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Région
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <select
+                      name="region"
+                      value={formData.region}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+                    >
+                      <option value="">Sélectionner</option>
+                      <option value="DAKAR">Dakar</option>
+                      <option value="THIES">Thiès</option>
+                      <option value="DIOURBEL">Diourbel</option>
+                      <option value="LOUGA">Louga</option>
+                      <option value="SAINT-LOUIS">Saint-Louis</option>
+                      <option value="KAOLACK">Kaolack</option>
+                      <option value="FATICK">Fatick</option>
+                      <option value="KAFFRINE">Kaffrine</option>
+                      <option value="KOLDA">Kolda</option>
+                      <option value="MATAM">Matam</option>
+                      <option value="SEDHIOU">Sédhiou</option>
+                      <option value="TAMBACOUNDA">Tambacounda</option>
+                      <option value="ZIGUINCHOR">Ziguinchor</option>
+                      <option value="KEDOUGOU">Kédougou</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Département */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Département
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="departement"
+                      value={formData.departement}
+                      onChange={handleChange}
+                      placeholder="Ex: Dakar, Mbour..."
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Commune */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Commune
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="commune"
+                      value={formData.commune}
+                      onChange={handleChange}
+                      placeholder="Ex: Plateau, Medina..."
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -509,42 +707,47 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {formData.beneficiaires.map((beneficiaire, index) => (
-                      <tr key={index} className="divide-x divide-gray-200">
-                        <td className="px-4 py-3">
+                    {formData.beneficiaires.map((b, index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-2">
                           <input
                             type="text"
-                            value={beneficiaire.prenom}
+                            value={b.prenom}
                             onChange={(e) => handleBeneficiaireChange(index, 'prenom', e.target.value)}
                             placeholder="Prénom"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            className="w-full px-3 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 outline-none"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2">
                           <input
                             type="text"
-                            value={beneficiaire.nom}
+                            value={b.nom}
                             onChange={(e) => handleBeneficiaireChange(index, 'nom', e.target.value)}
                             placeholder="Nom"
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            className="w-full px-3 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 outline-none"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-2">
                           <input
                             type="date"
-                            value={beneficiaire.dateNaissance}
+                            value={b.dateNaissance}
                             onChange={(e) => handleBeneficiaireChange(index, 'dateNaissance', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            className="w-full px-3 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 outline-none"
                           />
                         </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={beneficiaire.lienParente}
+                        <td className="px-4 py-2">
+                          <select
+                            value={b.lienParente}
                             onChange={(e) => handleBeneficiaireChange(index, 'lienParente', e.target.value)}
-                            placeholder="Ex: Fils, Fille, Conjoint..."
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                          />
+                            className="w-full px-3 py-1.5 border border-gray-200 rounded focus:ring-1 focus:ring-teal-500 outline-none bg-white"
+                          >
+                            <option value="">Lien</option>
+                            <option value="Conjoint(e)">Conjoint(e)</option>
+                            <option value="Enfant">Enfant</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Frère/Sœur">Frère/Sœur</option>
+                            <option value="Autre">Autre</option>
+                          </select>
                         </td>
                       </tr>
                     ))}
@@ -554,55 +757,298 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
             </div>
           </div>
         );
-      default:
+      case 4:
         return (
           <div className="space-y-8">
-            {/* Section: Rôle et accès */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Rôle et accès</h3>
-              <div className="grid grid-cols-1 gap-4">
-                {/* Rôle */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rôle <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Souscription au compte LEKET</h3>
+              <div className="flex items-center gap-3 mb-6 p-4 bg-teal-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="leket-souscrit"
+                  name="leket.souscrit"
+                  checked={formData.leket.souscrit}
+                  onChange={handleChange}
+                  className="w-5 h-5 text-teal-600 rounded focus:ring-teal-500"
+                />
+                <label htmlFor="leket-souscrit" className="font-medium text-teal-900">
+                  Souscrire au compte LEKET
+                </label>
+              </div>
+
+              {formData.leket.souscrit && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Jour de cotisation</label>
                     <select
-                      name="role"
-                      value={formData.role}
+                      name="leket.jourCotisation"
+                      value={formData.leket.jourCotisation}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white ${
-                        errors.role ? 'border-red-500' : 'border-gray-300'
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 bg-white ${
+                        (errors as any)['leket.jourCotisation'] ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
-                      <option value="">Sélectionnez un rôle</option>
-                      <option value="ADMIN">Administrateur</option>
-                      <option value="AGENT">Agent</option>
-                      <option value="SUPERVISEUR">Superviseur</option>
-                      <option value="MAKER">Maker</option>
-                      <option value="ADHERENT">Adhérent</option>
+                      <option value="">Sélectionner un jour</option>
+                      <option value="Lundi">Lundi</option>
+                      <option value="Mardi">Mardi</option>
+                      <option value="Mercredi">Mercredi</option>
+                      <option value="Jeudi">Jeudi</option>
+                      <option value="Vendredi">Vendredi</option>
+                      <option value="Samedi">Samedi</option>
+                      <option value="Dimanche">Dimanche</option>
                     </select>
+                    {(errors as any)['leket.jourCotisation'] && (
+                      <p className="mt-1 text-sm text-red-600">{(errors as any)['leket.jourCotisation']}</p>
+                    )}
                   </div>
-                  {errors.role && (
-                    <p className="mt-1 text-sm text-red-600">{errors.role}</p>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Montant des parts (FCFA)</label>
+                    <input
+                      type="number"
+                      name="leket.montantParts"
+                      value={formData.leket.montantParts}
+                      onChange={handleChange}
+                      placeholder="Ex: 5000"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 ${
+                        (errors as any)['leket.montantParts'] ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {(errors as any)['leket.montantParts'] && (
+                      <p className="mt-1 text-sm text-red-600">{(errors as any)['leket.montantParts']}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre de parts</label>
+                    <input
+                      type="number"
+                      name="leket.nombreParts"
+                      value={formData.leket.nombreParts}
+                      onChange={handleChange}
+                      placeholder="Ex: 2"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 ${
+                        (errors as any)['leket.nombreParts'] ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {(errors as any)['leket.nombreParts'] && (
+                      <p className="mt-1 text-sm text-red-600">{(errors as any)['leket.nombreParts']}</p>
+                    )}
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Événement butoir (Mois/Année)</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <select
+                          name="leket.evenementButoir.mois"
+                          value={formData.leket.evenementButoir.mois}
+                          onChange={handleChange}
+                          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 bg-white ${
+                            (errors as any)['leket.evenementButoir.mois'] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        >
+                          <option value="">Mois</option>
+                          {['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'].map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                        {(errors as any)['leket.evenementButoir.mois'] && (
+                          <p className="mt-1 text-sm text-red-600">{(errors as any)['leket.evenementButoir.mois']}</p>
+                        )}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="leket.evenementButoir.annee"
+                          value={formData.leket.evenementButoir.annee}
+                          onChange={handleChange}
+                          placeholder="Année (Ex: 2026)"
+                          className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 ${
+                            (errors as any)['leket.evenementButoir.annee'] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {(errors as any)['leket.evenementButoir.annee'] && (
+                          <p className="mt-1 text-sm text-red-600">{(errors as any)['leket.evenementButoir.annee']}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Récupération (jours avant événement)</label>
+                    <input
+                      type="number"
+                      name="leket.joursAvantButoir"
+                      value={formData.leket.joursAvantButoir}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Couverture Sanitaire Universelle (CSU)</h3>
+              <div className="flex items-center gap-3 mb-6 p-4 bg-blue-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="csu-souscrit"
+                  name="csu.souscrit"
+                  checked={formData.csu.souscrit}
+                  onChange={handleChange}
+                  className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="csu-souscrit" className="font-medium text-blue-900">
+                  Souscrire à la CSU
+                </label>
+              </div>
+
+              {formData.csu.souscrit && (
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre de bénéficiaires</label>
+                    <input
+                      type="number"
+                      name="csu.nombreBeneficiaires"
+                      value={formData.csu.nombreBeneficiaires}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="csu-medecin"
+                        name="csu.medecinTrouve"
+                        checked={formData.csu.medecinTrouve}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="csu-medecin" className="text-sm text-gray-700">Trouver un médecin</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="csu-pharmacie"
+                        name="csu.pharmacieTrouvee"
+                        checked={formData.csu.pharmacieTrouvee}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="csu-pharmacie" className="text-sm text-gray-700">Trouver une pharmacie</label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="csu-lettre"
+                        name="csu.lettreGarantie"
+                        checked={formData.csu.lettreGarantie}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="csu-lettre" className="text-sm text-gray-700">Lettre de garantie</label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Autres services ou détails</label>
+                    <input
+                      type="text"
+                      name="csu.autres"
+                      value={formData.csu.autres}
+                      onChange={handleChange}
+                      placeholder="Précisez d'autres besoins..."
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Détails d'adhésion</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Date d'adhésion</label>
+                  <input
+                    type="date"
+                    name="adhesion.date"
+                    value={formData.adhesion.date}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Numéro d'adhésion</label>
+                  <input
+                    type="text"
+                    name="adhesion.numero"
+                    value={formData.adhesion.numero}
+                    onChange={handleChange}
+                    placeholder="Numéro unique"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nom de la MSD</label>
+                  <input
+                    type="text"
+                    name="adhesion.nomMSD"
+                    value={formData.adhesion.nomMSD}
+                    onChange={handleChange}
+                    placeholder="Nom de la MSD"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Commune de la MSD</label>
+                  <input
+                    type="text"
+                    name="adhesion.communeMSD"
+                    value={formData.adhesion.communeMSD}
+                    onChange={handleChange}
+                    placeholder="Commune de la MSD"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                  />
                 </div>
               </div>
             </div>
-
-            {/* Info: Mot de passe envoyé par email */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <h4 className="text-sm font-semibold text-blue-900 mb-1">Configuration du mot de passe</h4>
-                  <p className="text-sm text-blue-700">
-                    L'utilisateur recevra un email de bienvenue avec un lien sécurisé pour définir son propre mot de passe. Le lien sera valide pendant 7 jours.
-                  </p>
+          </div>
+        );
+      case 7:
+        return (
+          <div className="space-y-8">
+            {/* Section: Attribution du rôle */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Attribution du rôle</h3>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="relative">
+                  <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white ${
+                      errors.role ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Sélectionner un rôle</option>
+                    <option value="ADMIN">Administrateur</option>
+                    <option value="AGENT">Agent</option>
+                    <option value="SUPERVISEUR">Superviseur</option>
+                    <option value="MAKER">Maker</option>
+                    <option value="UTILISATEUR">Adhérent</option>
+                  </select>
                 </div>
+                {errors.role && (
+                  <p className="mt-1 text-sm text-red-600">{errors.role}</p>
+                )}
               </div>
             </div>
           </div>
@@ -629,7 +1075,7 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
               <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
                 <User className="w-5 h-5 text-teal-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Nouvel Utilisateur</h2>
+              <h2 className="text-xl font-bold text-gray-900">Nouvel Adhérent</h2>
             </div>
             <button
               onClick={onClose}
@@ -700,7 +1146,7 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
                       type="submit"
                       className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors"
                     >
-                      Créer l'utilisateur
+                      Créer l'adhérent
                     </button>
                   )}
                 </div>

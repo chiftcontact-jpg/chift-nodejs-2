@@ -36,8 +36,8 @@ export const schemas = {
     maitriseChift: Joi.boolean().optional()
   }),
 
-  // Adhérent
-  createAdherent: Joi.object({
+  // Utilisateur
+  createUtilisateur: Joi.object({
     nom: Joi.string().required(),
     prenom: Joi.string().required(),
     telephone: Joi.string().pattern(/^[0-9]{9,15}$/).required(),
@@ -49,7 +49,7 @@ export const schemas = {
     commune: Joi.string().required(),
     dateNaissance: Joi.date().max('now').required(),
     profession: Joi.string().optional(),
-    typeAdherent: Joi.string().valid('communautaire', 'individuel').required(),
+    typeUtilisateur: Joi.string().valid('communautaire', 'individuel').required(),
     communauteId: Joi.string().optional(),
     agentCollecteId: Joi.string().optional(),
     makerId: Joi.string().optional(),

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import adherentRoutes from './adherentRoutes';
+import utilisateurRoutes from './utilisateurRoutes';
 import souscriptionRoutes from './souscriptionRoutes';
 import authRoutes from './authRoutes';
 import agentRoutes from './agentRoutes';
@@ -11,7 +11,7 @@ const router = Router();
 
 // Routes principales
 router.use('/auth', authRoutes);
-router.use('/adherents', adherentRoutes);
+router.use('/utilisateurs', utilisateurRoutes);
 router.use('/souscriptions', souscriptionRoutes);
 router.use('/agents', agentRoutes);
 router.use('/caisses', caisseRoutes);

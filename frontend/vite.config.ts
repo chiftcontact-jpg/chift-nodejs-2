@@ -11,17 +11,24 @@ export default defineConfig({
   },
   server: {
     port: 3046,
+    host: true, // Permettre l'accès externe
     proxy: {
-      // User Service (authentification et gestion utilisateurs)
-      '/api/users': {
-        target: 'http://localhost:3050',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/users/, '/api/users'),
-      },
-      // Backend principal (business logic)
+      // Toutes les requêtes /api sont redirigées vers le gateway
       '/api': {
-        target: 'http://localhost:3045',
+        target: 'http://chift-gateway:3000',
         changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('❌ Proxy Error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('📡 Proxying:', req.method, req.url, '-> http://chift-gateway:3000');
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('📬 Proxy Response:', proxyRes.statusCode, req.url);
+          });
+        },
       },
     },
   },

@@ -44,7 +44,7 @@ const config: Config = {
     fromName: process.env.EMAIL_FROM_NAME || 'Chift Platform',
   },
   cors: {
-    origins: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3046'],
+    origins: process.env.CORS_ORIGIN?.split(',') || ['http://192.168.1.21:3046', 'http://localhost:3046'],
   },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),

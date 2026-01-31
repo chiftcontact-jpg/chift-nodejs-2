@@ -1,12 +1,12 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type UserRole = 'ADMIN' | 'AGENT' | 'SUPERVISEUR' | 'MAKER' | 'ADHERENT'
+export type UserRole = 'ADMIN' | 'AGENT' | 'SUPERVISEUR' | 'MAKER' | 'UTILISATEUR'
 
 export interface UserRoleDetail {
   role: UserRole
   referenceId?: string
-  referenceModel?: 'Agent' | 'Maker' | 'Adherent'
+  referenceModel?: 'Agent' | 'Maker' | 'Utilisateur'
   caisseId?: string
   dateAttribution: string
   actif: boolean
@@ -32,6 +32,7 @@ export interface User {
   }>
   statut: 'actif' | 'inactif' | 'suspendu'
   permissions: string[]
+  mustChangePassword?: boolean
   createdAt?: string
   derniereConnexion?: string
   tentativesConnexion?: number
@@ -46,7 +47,7 @@ interface AuthState {
   logout: () => void
   hasRole: (role: UserRole) => boolean
   isMakerInCaisse: (caisseId: string) => boolean
-  isAdherentInCaisse: (caisseId: string) => boolean
+  isUtilisateurInCaisse: (caisseId: string) => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -73,11 +74,11 @@ export const useAuthStore = create<AuthState>()(
           r.role === 'MAKER' && r.caisseId === caisseId && r.actif
         )
       },
-      isAdherentInCaisse: (caisseId: string) => {
+      isUtilisateurInCaisse: (caisseId: string) => {
         const user = get().user
         if (!user) return false
         return user.roles.some(r => 
-          r.role === 'ADHERENT' && r.caisseId === caisseId && r.actif
+          r.role === 'UTILISATEUR' && r.caisseId === caisseId && r.actif
         )
       },
     }),

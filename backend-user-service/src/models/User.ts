@@ -1,14 +1,14 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 // Rôles système
-export type UserRole = 'ADMIN' | 'AGENT' | 'SUPERVISEUR' | 'MAKER' | 'ADHERENT';
+export type UserRole = 'ADMIN' | 'AGENT' | 'SUPERVISEUR' | 'MAKER' | 'UTILISATEUR';
 
 // Multi-rôles : un utilisateur peut avoir plusieurs rôles dans différentes caisses
 export interface IUserRole {
   role: UserRole;
-  referenceId?: string; // ID de l'entité (Agent, Maker, Adherent)
-  referenceModel?: 'Agent' | 'Maker' | 'Adherent';
-  caisseId?: string; // ID de la caisse (pour MAKER et ADHERENT)
+  referenceId?: string; // ID de l'entité (Agent, Maker, Utilisateur)
+  referenceModel?: 'Agent' | 'Maker' | 'Utilisateur';
+  caisseId?: string; // ID de la caisse (pour MAKER et UTILISATEUR)
   dateAttribution: Date;
   actif: boolean;
 }
@@ -29,7 +29,48 @@ export interface IUser extends Document {
   telephone: string;
   whatsapp?: string; // Numéro WhatsApp pour les Makers
   cni?: string; // Pièce d'identité pour les Makers
+  adresse: string;
+  region: string;
+  departement: string;
+  commune: string;
+  dateNaissance: Date;
   profession?: string; // Profession de l'utilisateur
+  groupeSanguin?: string;
+  
+  // LEKET Account Subscription
+  leket?: {
+    souscrit: boolean;
+    jourCotisation: string;
+    montantParts: number;
+    nombreParts: number;
+    evenementButoir: {
+      mois: string;
+      annee: string;
+    };
+    dateRecuperation: Date;
+    joursAvantButoir: number;
+  };
+
+  // CSU (Couverture Sanitaire Universelle)
+  csu?: {
+    souscrit: boolean;
+    nombreBeneficiaires: number;
+    medecinTrouve?: boolean;
+    pharmacieTrouvee?: boolean;
+    lettreGarantie?: boolean;
+    autres?: string;
+  };
+
+  // Adhésion / Membership
+  adhesion?: {
+    date: Date;
+    numero: string;
+    nomMSD: string;
+    communeMSD: string;
+    ordreEnrolement?: number; // Ordre d'enrôlement pour la codification
+    codeUtilisateur?: string; // Code utilisateur généré
+  };
+
   beneficiaires?: Array<{
     nom: string;
     prenom: string;
@@ -44,6 +85,7 @@ export interface IUser extends Document {
   // Sécurité
   derniereConnexion?: Date;
   tentativesConnexion: number;
+  mustChangePassword?: boolean; // Forcer le changement de mot de passe à la première connexion
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   
@@ -56,22 +98,22 @@ export interface IUser extends Document {
   // Méthodes helper
   hasRole(role: UserRole): boolean;
   isMakerInCaisse(caisseId: string): boolean;
-  isAdherentInCaisse(caisseId: string): boolean;
+  isUtilisateurInCaisse(caisseId: string): boolean;
   canBeMakerInCaisse(): boolean; // Vérifie si peut devenir Maker (max 1 caisse)
   getMakerCaisseId(): string | null;
-  getAdherentCaisseIds(): string[];
+  getUtilisateurCaisseIds(): string[];
 }
 
 const UserRoleSchema = new Schema<IUserRole>({
   role: {
     type: String,
-    enum: ['ADMIN', 'AGENT', 'SUPERVISEUR', 'MAKER', 'ADHERENT'],
+    enum: ['ADMIN', 'AGENT', 'SUPERVISEUR', 'MAKER', 'UTILISATEUR'],
     required: true
   },
   referenceId: { type: String },
   referenceModel: {
     type: String,
-    enum: ['Agent', 'Maker', 'Adherent']
+    enum: ['Agent', 'Maker', 'Utilisateur']
   },
   caisseId: { type: String },
   dateAttribution: { type: Date, default: Date.now },
@@ -103,7 +145,7 @@ const UserSchema = new Schema<IUser>(
     },
     rolePrincipal: {
       type: String,
-      enum: ['ADMIN', 'AGENT', 'SUPERVISEUR', 'MAKER', 'ADHERENT'],
+      enum: ['ADMIN', 'AGENT', 'SUPERVISEUR', 'MAKER', 'UTILISATEUR'],
       required: true,
       index: true
     },
@@ -134,7 +176,48 @@ const UserSchema = new Schema<IUser>(
     telephone: { type: String, required: true },
     whatsapp: { type: String },
     cni: { type: String },
+    adresse: { type: String, required: true },
+    region: { type: String, required: true },
+    departement: { type: String, required: true },
+    commune: { type: String, required: true },
+    dateNaissance: { type: Date, required: true },
     profession: { type: String },
+    groupeSanguin: { type: String },
+
+    // LEKET
+    leket: {
+      souscrit: { type: Boolean, default: false },
+      jourCotisation: { type: String },
+      montantParts: { type: Number },
+      nombreParts: { type: Number },
+      evenementButoir: {
+        mois: { type: String },
+        annee: { type: String }
+      },
+      dateRecuperation: { type: Date },
+      joursAvantButoir: { type: Number }
+    },
+
+    // CSU
+    csu: {
+      souscrit: { type: Boolean, default: false },
+      nombreBeneficiaires: { type: Number, default: 0 },
+      medecinTrouve: { type: Boolean, default: false },
+      pharmacieTrouvee: { type: Boolean, default: false },
+      lettreGarantie: { type: Boolean, default: false },
+      autres: { type: String }
+    },
+
+    // Adhésion
+    adhesion: {
+      date: { type: Date, default: Date.now },
+      numero: { type: String },
+      nomMSD: { type: String },
+      communeMSD: { type: String },
+      ordreEnrolement: { type: Number },
+      codeUtilisateur: { type: String }
+    },
+
     beneficiaires: [{
       nom: { type: String, required: true },
       prenom: { type: String, required: true },
@@ -154,6 +237,7 @@ const UserSchema = new Schema<IUser>(
     // Sécurité
     derniereConnexion: { type: Date },
     tentativesConnexion: { type: Number, default: 0 },
+    mustChangePassword: { type: Boolean, default: false },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
     
@@ -176,9 +260,9 @@ UserSchema.methods.isMakerInCaisse = function(caisseId: string): boolean {
   );
 };
 
-UserSchema.methods.isAdherentInCaisse = function(caisseId: string): boolean {
+UserSchema.methods.isUtilisateurInCaisse = function(caisseId: string): boolean {
   return this.roles.some((r: IUserRole) => 
-    r.role === 'ADHERENT' && r.caisseId === caisseId && r.actif
+    r.role === 'UTILISATEUR' && r.caisseId === caisseId && r.actif
   );
 };
 
@@ -192,9 +276,9 @@ UserSchema.methods.getMakerCaisseId = function(): string | null {
   return makerRole?.caisseId || null;
 };
 
-UserSchema.methods.getAdherentCaisseIds = function(): string[] {
+UserSchema.methods.getUtilisateurCaisseIds = function(): string[] {
   return this.roles
-    .filter((r: IUserRole) => r.role === 'ADHERENT' && r.actif)
+    .filter((r: IUserRole) => r.role === 'UTILISATEUR' && r.actif)
     .map((r: IUserRole) => r.caisseId)
     .filter((id: string | undefined): id is string => !!id);
 };

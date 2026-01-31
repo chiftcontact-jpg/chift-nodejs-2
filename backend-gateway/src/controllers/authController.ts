@@ -9,6 +9,12 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
+      logger.info('Requête de login reçue au gateway', { 
+        email, 
+        hasPassword: !!password,
+        body: JSON.stringify(req.body) 
+      });
+
       if (!email || !password) {
         res.status(400).json({
           success: false,
@@ -17,7 +23,7 @@ export class AuthController {
         return;
       }
 
-      logger.info('Tentative de connexion via gateway', { email });
+      logger.info('Tentative de connexion via gateway', { email, target: `${config.services.user}/api/users/login` });
 
       // Appeler le service utilisateur pour la connexion
       const response = await axios.post(
@@ -27,6 +33,7 @@ export class AuthController {
           headers: {
             'Content-Type': 'application/json',
           },
+          timeout: 10000 // Augmentation du timeout à 10s
         }
       );
 
@@ -40,6 +47,8 @@ export class AuthController {
       logger.error('Erreur de connexion via gateway', {
         error: error.message,
         email: req.body.email,
+        response: error.response?.data,
+        status: error.response?.status
       });
 
       if (error.response) {

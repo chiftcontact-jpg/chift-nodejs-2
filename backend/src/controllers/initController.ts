@@ -38,7 +38,7 @@ export const initializeDatabase = async (req: Request, res: Response) => {
         'gestion_caisses',
         'gestion_reseaux',
         'gestion_communautes',
-        'gestion_adherents',
+        'gestion_utilisateurs_chift',
         'gestion_souscriptions',
         'gestion_comptes',
         'gestion_services',
@@ -69,7 +69,7 @@ export const initializeDatabase = async (req: Request, res: Response) => {
       numeroAgent: 'AG-2024-001',
       dateEnrolement: new Date(),
       maitriseChift: true,
-      nombreAdhérentsRecrutés: 0,
+      nombreUtilisateursRecrutés: 0,
       services: {
         leket: { actif: true, dateActivation: new Date() },
         sokhla: { actif: true, dateActivation: new Date() },

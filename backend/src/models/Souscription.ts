@@ -4,7 +4,7 @@ export interface ISouscription extends Document {
   numeroSouscription: string;
   
   // Relations
-  adherentId?: mongoose.Types.ObjectId;
+  utilisateurId?: mongoose.Types.ObjectId;
   agentCollecteId?: mongoose.Types.ObjectId;
   makerId?: mongoose.Types.ObjectId;
   communauteId?: mongoose.Types.ObjectId;
@@ -80,9 +80,9 @@ const SouscriptionSchema = new Schema<ISouscription>(
     },
     
     // Relations
-    adherentId: {
+    utilisateurId: {
       type: Schema.Types.ObjectId,
-      ref: 'Adhérent'
+      ref: 'Utilisateur'
     },
     agentCollecteId: {
       type: Schema.Types.ObjectId,
@@ -173,7 +173,7 @@ const SouscriptionSchema = new Schema<ISouscription>(
 
 // Index
 SouscriptionSchema.index({ numeroSouscription: 1 });
-SouscriptionSchema.index({ adherentId: 1 });
+SouscriptionSchema.index({ utilisateurId: 1 });
 SouscriptionSchema.index({ agentCollecteId: 1 });
 SouscriptionSchema.index({ statut: 1, etapeActuelle: 1 });
 SouscriptionSchema.index({ dateCollecte: -1 });

@@ -92,12 +92,25 @@ class MailService {
   }
 
   // Email de bienvenue
-  async sendWelcomeEmail(to: string, name: string, resetUrl?: string): Promise<boolean> {
+  async sendWelcomeEmail(
+    to: string, 
+    name: string, 
+    resetUrl?: string, 
+    role?: string, 
+    credentials?: { email: string; password?: string },
+    loginUrl?: string
+  ): Promise<boolean> {
     return this.sendEmail({
       to,
-      subject: 'Bienvenue sur Chift - Définissez votre mot de passe',
+      subject: 'Bienvenue dans la communauté CHIFT - Vos accès personnels',
       template: 'welcome',
-      context: { name, resetUrl },
+      context: { 
+        name, 
+        resetUrl, 
+        role, 
+        credentials, 
+        loginUrl 
+      },
     });
   }
 

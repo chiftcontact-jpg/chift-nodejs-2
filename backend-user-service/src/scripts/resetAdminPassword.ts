@@ -21,6 +21,8 @@ const resetAdminPassword = async () => {
 
     // Mettre à jour le mot de passe et réinitialiser le statut
     admin.password = hashedPassword;
+    admin.email = 'admin@chift.sn';
+    admin.username = 'admin';
     admin.statut = 'actif';
     admin.tentativesConnexion = 0;
     

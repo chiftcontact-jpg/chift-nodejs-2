@@ -6,7 +6,8 @@ import {
   Wallet, 
   Network, 
   Settings,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -29,6 +30,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
       path: '/utilisateurs',
       icon: Users,
       label: 'Utilisateurs'
+    },
+    {
+      path: '/mon-profil',
+      icon: User,
+      label: 'Mon Profil'
     },
     {
       path: '/caisses',
@@ -60,20 +66,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-gradient-to-b from-blue-900 to-blue-800 text-white
+          fixed top-0 left-0 h-full bg-gradient-to-b from-teal-900 to-teal-800 text-white
           w-64 z-50 transform transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:static
+          lg:translate-x-0 lg:static shadow-2xl
         `}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="px-6 py-8 border-b border-blue-700">
+          <div className="px-6 py-8 border-b border-teal-700/50">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                <LayoutDashboard className="w-6 h-6 text-blue-900" />
+              <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                <LayoutDashboard className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold">CHIFT ADMIN</h1>
+              <h1 className="text-xl font-bold tracking-tight text-white">CHIFT ADMIN</h1>
             </div>
           </div>
 
@@ -88,16 +94,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
                       to={item.path}
                       onClick={onClose}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
+                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                         ${
                           isActive
-                            ? 'bg-blue-700 text-white shadow-lg'
-                            : 'text-blue-100 hover:bg-blue-700/50 hover:text-white'
+                            ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
+                            : 'text-teal-100 hover:bg-teal-700/50 hover:text-white'
                         }`
                       }
                     >
                       <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-bold">{item.label}</span>
                     </NavLink>
                   </li>
                 );
@@ -114,10 +120,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen = true, onClo
                   navigate('/login');
                 }
               }}
-              className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-blue-100 hover:bg-blue-700/50 hover:text-white transition-all duration-200"
+              className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-teal-100 hover:bg-red-500/20 hover:text-red-100 transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
-              <span className="font-medium">Se déconnecter</span>
+              <span className="font-bold">Se déconnecter</span>
             </button>
           </div>
         </div>

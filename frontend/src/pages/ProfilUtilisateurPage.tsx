@@ -36,6 +36,11 @@ export const ProfilUtilisateurPage: React.FC = () => {
         telephone: currentUser.telephone || '',
         whatsapp: currentUser.whatsapp || '',
       });
+
+      // Si le changement de mot de passe est obligatoire, ouvrir la modal
+      if (currentUser.mustChangePassword) {
+        setShowPasswordModal(true);
+      }
     }
   }, [currentUser]);
 
@@ -90,12 +95,18 @@ export const ProfilUtilisateurPage: React.FC = () => {
 
     try {
       setLoading(true);
-      await userAPI.updatePassword(currentUser?._id!, {
+      const response = await userAPI.updatePassword(currentUser?._id!, {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
       
       alert('✅ Mot de passe mis à jour avec succès');
+      
+      // Mettre à jour l'utilisateur dans le store pour enlever le flag mustChangePassword
+      if (currentUser) {
+        setUser({ ...currentUser, mustChangePassword: false });
+      }
+      
       setShowPasswordModal(false);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
@@ -158,17 +169,30 @@ export const ProfilUtilisateurPage: React.FC = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
       case 'AGENT':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'MAKER':
-        return 'bg-pink-100 text-pink-800 border-pink-200';
-      case 'ADHERENT':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'UTILISATEUR':
+      case 'USER':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'SUPERVISEUR':
-        return 'bg-cyan-100 text-cyan-800 border-cyan-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'ADMIN': return 'Administrateur';
+      case 'AGENT': return 'Agent';
+      case 'MAKER': return 'Maker';
+      case 'ADHERENT':
+      case 'USER': return 'Adhérent';
+      case 'SUPERVISEUR': return 'Superviseur';
+      default: return role;
     }
   };
 
@@ -179,7 +203,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
           <p className="text-gray-600 mb-4">Aucun utilisateur connecté</p>
           <button
             onClick={() => navigate('/login')}
-            className="text-blue-600 hover:text-blue-700"
+            className="text-teal-600 hover:text-teal-700"
           >
             Se connecter
           </button>
@@ -192,24 +216,24 @@ export const ProfilUtilisateurPage: React.FC = () => {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         {/* En-tête */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+        <div className="bg-gradient-to-r from-teal-600 to-teal-700 px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="bg-white rounded-full p-3">
-                <User className="w-12 h-12 text-blue-600" />
+                <User className="w-12 h-12 text-teal-600" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
                   {currentUser.prenom} {currentUser.nom}
                 </h1>
-                <p className="text-blue-100">@{currentUser.username}</p>
+                <p className="text-teal-100">@{currentUser.username}</p>
               </div>
             </div>
             
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center space-x-2 bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                className="flex items-center space-x-2 bg-white text-teal-600 px-4 py-2 rounded-lg hover:bg-teal-50 transition-colors"
               >
                 <Edit2 className="w-4 h-4" />
                 <span>Modifier</span>
@@ -224,7 +248,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
             {/* Informations générales */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <User className="w-5 h-5 mr-2 text-blue-600" />
+                <User className="w-5 h-5 mr-2 text-teal-600" />
                 Informations générales
               </h2>
               
@@ -239,7 +263,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
                       name="prenom"
                       value={formData.prenom}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       required
                     />
                   ) : (
@@ -257,7 +281,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
                       name="nom"
                       value={formData.nom}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       required
                     />
                   ) : (
@@ -287,7 +311,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
                       name="telephone"
                       value={formData.telephone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                       required
                     />
                   ) : (
@@ -305,7 +329,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
                       name="whatsapp"
                       value={formData.whatsapp}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     />
                   ) : (
                     <p className="text-gray-900 py-2">{currentUser.whatsapp || 'Non renseigné'}</p>
@@ -317,7 +341,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
             {/* Rôles et permissions */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Shield className="w-5 h-5 mr-2 text-blue-600" />
+                <Shield className="w-5 h-5 mr-2 text-teal-600" />
                 Rôles et permissions
               </h2>
               
@@ -326,8 +350,8 @@ export const ProfilUtilisateurPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Rôle principal
                   </label>
-                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(currentUser.rolePrincipal)}`}>
-                    {currentUser.rolePrincipal}
+                  <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(currentUser.rolePrincipal)} shadow-sm`}>
+                    {getRoleLabel(currentUser.rolePrincipal)}
                   </span>
                 </div>
 
@@ -340,9 +364,9 @@ export const ProfilUtilisateurPage: React.FC = () => {
                       {currentUser.roles.map((role, index) => (
                         <span
                           key={index}
-                          className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(role.role)}`}
+                          className={`inline-flex px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(role.role)} shadow-sm`}
                         >
-                          {role.role}
+                          {getRoleLabel(role.role)}
                           {role.caisseId && (
                             <span className="ml-1 text-xs opacity-75">
                               (Caisse: {role.caisseId.substring(0, 8)}...)
@@ -372,7 +396,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
             {/* Informations système */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+                <Calendar className="w-5 h-5 mr-2 text-teal-600" />
                 Informations système
               </h2>
               
@@ -416,7 +440,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex items-center space-x-2 bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 shadow-md"
                   disabled={loading}
                 >
                   <Save className="w-4 h-4" />
@@ -432,7 +456,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => setShowPasswordModal(true)}
-                  className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                  className="flex items-center space-x-2 text-teal-600 hover:text-teal-700 px-4 py-2 rounded-lg hover:bg-teal-50 transition-colors"
                 >
                   <Key className="w-4 h-4" />
                   <span>Changer le mot de passe</span>
@@ -464,9 +488,14 @@ export const ProfilUtilisateurPage: React.FC = () => {
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
               Changer le mot de passe
             </h3>
+            {currentUser?.mustChangePassword && (
+              <p className="text-sm text-red-600 mb-4 font-medium italic">
+                ⚠️ Pour votre première connexion, vous devez impérativement changer votre mot de passe par défaut.
+              </p>
+            )}
             
             <form onSubmit={handlePasswordSubmit}>
               <div className="space-y-4 mb-6">
@@ -479,7 +508,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
                     name="currentPassword"
                     value={passwordData.currentPassword}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -493,7 +522,7 @@ export const ProfilUtilisateurPage: React.FC = () => {
                     name="newPassword"
                     value={passwordData.newPassword}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     required
                     minLength={8}
                   />
@@ -508,27 +537,29 @@ export const ProfilUtilisateurPage: React.FC = () => {
                     name="confirmPassword"
                     value={passwordData.confirmPassword}
                     onChange={handlePasswordChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                     required
                   />
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                  disabled={loading}
-                >
-                  Annuler
-                </button>
+                {!currentUser?.mustChangePassword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordModal(false);
+                      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                    }}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    disabled={loading}
+                  >
+                    Annuler
+                  </button>
+                )}
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-md"
                   disabled={loading}
                 >
                   {loading ? 'Modification...' : 'Confirmer'}
@@ -543,7 +574,8 @@ export const ProfilUtilisateurPage: React.FC = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+              <Trash2 className="w-6 h-6 mr-2 text-red-600" />
               Confirmer la suppression
             </h3>
             <p className="text-gray-600 mb-6">
@@ -552,14 +584,14 @@ export const ProfilUtilisateurPage: React.FC = () => {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 disabled={loading}
               >
                 Annuler
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors shadow-md"
                 disabled={loading}
               >
                 {loading ? 'Suppression...' : 'Supprimer'}
@@ -575,12 +607,12 @@ export const ProfilUtilisateurPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                <QrCode className="w-6 h-6 mr-2 text-blue-600" />
+                <QrCode className="w-6 h-6 mr-2 text-teal-600" />
                 Mon QR Code
               </h3>
               <button
                 onClick={() => setShowQRModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -599,8 +631,8 @@ export const ProfilUtilisateurPage: React.FC = () => {
                 Scannez ce QR code pour accéder à vos informations
               </p>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 w-full">
-                <p className="text-xs text-blue-800">
+              <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 mb-4 w-full">
+                <p className="text-xs text-teal-800">
                   <strong>Contenu du QR:</strong> ID, nom, prénom, email, téléphone, rôle
                 </p>
               </div>
@@ -608,13 +640,13 @@ export const ProfilUtilisateurPage: React.FC = () => {
               <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setShowQRModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Fermer
                 </button>
                 <button
                   onClick={handleDownloadQR}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors shadow-md"
                 >
                   Télécharger
                 </button>

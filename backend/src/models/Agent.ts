@@ -19,7 +19,7 @@ export interface IAgent extends Document {
   dateAdhesion?: Date;
   lieuAdhesion?: string;
   maitriseChift: boolean;
-  nombreAdhérentsRecrutés: number;
+  nombreUtilisateursRecrutés: number;
   services?: {
     leket: { actif: boolean; dateActivation?: Date };
     sokhla: { actif: boolean; dateActivation?: Date };
@@ -71,7 +71,7 @@ const AgentSchema = new Schema<IAgent>(
     dateAdhesion: { type: Date },
     lieuAdhesion: { type: String },
     maitriseChift: { type: Boolean, default: false },
-    nombreAdhérentsRecrutés: { type: Number, default: 0 },
+    nombreUtilisateursRecrutés: { type: Number, default: 0 },
     services: {
       leket: {
         actif: { type: Boolean, default: false },

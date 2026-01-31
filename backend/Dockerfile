@@ -6,13 +6,16 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installer les dépendances
-RUN npm ci
+RUN npm install
 
 # Copier le reste du code
 COPY . .
+
+# Construire l'application
+RUN npm run build
 
 # Exposer le port
 EXPOSE 3045
 
 # Commande par défaut
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/server.js"]

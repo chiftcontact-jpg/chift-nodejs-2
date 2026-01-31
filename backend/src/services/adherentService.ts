@@ -1,14 +1,14 @@
-import Adhérent, { IAdhérent } from '../models/Adherent';
+import Utilisateur, { IUtilisateur } from '../models/Utilisateur';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../utils/logger';
 
-class AdhérentService {
+class UtilisateurService {
   /**
-   * Génère un numéro unique d'adhérent
+   * Génère un numéro unique d'utilisateur
    */
-  private async genererNumeroAdherent(): Promise<string> {
-    const count = await Adhérent.countDocuments();
-    const numero = `ADH${String(count + 1).padStart(8, '0')}`;
+  private async genererNumeroUtilisateur(): Promise<string> {
+    const count = await Utilisateur.countDocuments();
+    const numero = `USR${String(count + 1).padStart(8, '0')}`;
     return numero;
   }
 
@@ -16,7 +16,7 @@ class AdhérentService {
    * Génère un numéro de compte CHIFT
    */
   private async genererNumeroCompteChift(): Promise<string> {
-    const count = await Adhérent.countDocuments();
+    const count = await Utilisateur.countDocuments();
     const numero = `CHIFT${String(count + 1).padStart(10, '0')}`;
     return numero;
   }
@@ -25,24 +25,24 @@ class AdhérentService {
    * Génère un numéro CSU
    */
   private async genererNumeroCSU(): Promise<string> {
-    const count = await Adhérent.countDocuments();
+    const count = await Utilisateur.countDocuments();
     const numero = `CSU${String(count + 1).padStart(10, '0')}`;
     return numero;
   }
 
   /**
-   * Crée un nouvel adhérent
+   * Crée un nouvel utilisateur
    */
-  async creerAdherent(data: any): Promise<IAdhérent> {
+  async creerUtilisateur(data: any): Promise<IUtilisateur> {
     try {
       // Génération des numéros
-      const numeroAdherent = await this.genererNumeroAdherent();
+      const numeroUtilisateur = await this.genererNumeroUtilisateur();
       const numeroCompte = await this.genererNumeroCompteChift();
       const numeroCSU = await this.genererNumeroCSU();
 
-      const adherent = await Adhérent.create({
+      const utilisateur = await Utilisateur.create({
         ...data,
-        numeroAdherent,
+        numeroUtilisateur,
         compteChift: {
           numeroCompte,
           solde: 0,
@@ -62,113 +62,106 @@ class AdhérentService {
         accesMobileMoney: true
       });
 
-      logger.info(`Nouvel adhérent créé: ${adherent.numeroAdherent}`);
-      return adherent;
+      logger.info(`Nouvel utilisateur créé: ${utilisateur.numeroUtilisateur}`);
+      return utilisateur;
     } catch (error: any) {
-      logger.error('Erreur création adhérent:', error);
+      logger.error('Erreur création utilisateur:', error);
       throw new AppError(error.message, 400);
     }
   }
 
   /**
-   * Récupère un adhérent par ID
+   * Récupère un utilisateur par ID
    */
-  async getAdherentById(id: string): Promise<IAdhérent> {
-    const adherent = await Adhérent.findById(id)
+  async getUtilisateurById(id: string): Promise<IUtilisateur> {
+    const utilisateur = await Utilisateur.findById(id)
       .populate('communauteId')
       .populate('agentCollecteId')
       .populate('makerId');
 
-    if (!adherent) {
-      throw new AppError('Adhérent non trouvé', 404);
+    if (!utilisateur) {
+      throw new AppError('Utilisateur non trouvé', 404);
     }
 
-    return adherent;
+    return utilisateur;
   }
 
   /**
-   * Liste tous les adhérents avec filtres
+   * Liste tous les utilisateurs avec filtres
    */
-  async listerAdherents(filters: any = {}): Promise<IAdhérent[]> {
+  async listerUtilisateurs(filters: any = {}): Promise<IUtilisateur[]> {
     const query: any = {};
 
     if (filters.statut) query.statut = filters.statut;
-    if (filters.typeAdherent) query.typeAdherent = filters.typeAdherent;
+    if (filters.typeUtilisateur) query.typeUtilisateur = filters.typeUtilisateur;
     if (filters.region) query.region = filters.region;
     if (filters.communauteId) query.communauteId = filters.communauteId;
 
-    const adherents = await Adhérent.find(query)
+    const utilisateurs = await Utilisateur.find(query)
       .populate('communauteId')
       .populate('agentCollecteId')
+      .populate('makerId')
       .sort({ createdAt: -1 });
 
-    return adherents;
+    return utilisateurs;
   }
 
   /**
-   * Met à jour un adhérent
+   * Met à jour un utilisateur
    */
-  async mettreAJourAdherent(id: string, data: any): Promise<IAdhérent> {
-    const adherent = await Adhérent.findByIdAndUpdate(
+  async mettreAJourUtilisateur(id: string, data: any): Promise<IUtilisateur> {
+    const utilisateur = await Utilisateur.findByIdAndUpdate(
       id,
-      { ...data },
+      { $set: data },
       { new: true, runValidators: true }
     );
 
-    if (!adherent) {
-      throw new AppError('Adhérent non trouvé', 404);
+    if (!utilisateur) {
+      throw new AppError('Utilisateur non trouvé', 404);
     }
 
-    logger.info(`Adhérent mis à jour: ${adherent.numeroAdherent}`);
-    return adherent;
+    return utilisateur;
   }
 
   /**
-   * Attribue une carte NFC
+   * Attribue une carte NFC à un utilisateur
    */
-  async attribuerCarteNFC(
-    adherentId: string,
-    numeroSerie: string,
-    mutuelleRecuperation: string
-  ): Promise<IAdhérent> {
-    const adherent = await Adhérent.findByIdAndUpdate(
-      adherentId,
+  async attribuerCarteNFC(id: string, numeroSerie: string, mutuelle: string): Promise<IUtilisateur> {
+    const utilisateur = await Utilisateur.findByIdAndUpdate(
+      id,
       {
-        carteNFC: {
-          numeroSerie,
-          dateEmission: new Date(),
-          dateRecuperation: new Date(),
-          mutuelleRecuperation,
-          statut: 'active'
+        $set: {
+          carteNFCRemise: true,
+          dateRemiseCarteNFC: new Date(),
+          mutuelleAssignee: mutuelle,
+          'carteNFC.numeroSerie': numeroSerie
         }
       },
       { new: true }
     );
 
-    if (!adherent) {
-      throw new AppError('Adhérent non trouvé', 404);
+    if (!utilisateur) {
+      throw new AppError('Utilisateur non trouvé', 404);
     }
 
-    logger.info(`Carte NFC attribuée à: ${adherent.numeroAdherent}`);
-    return adherent;
+    return utilisateur;
   }
 
   /**
-   * Recherche adhérents
+   * Recherche d'utilisateurs
    */
-  async rechercherAdherents(searchTerm: string): Promise<IAdhérent[]> {
-    const adherents = await Adhérent.find({
+  async rechercherUtilisateurs(searchTerm: string): Promise<IUtilisateur[]> {
+    const searchRegex = new RegExp(searchTerm, 'i');
+    
+    return await Utilisateur.find({
       $or: [
-        { nom: { $regex: searchTerm, $options: 'i' } },
-        { prenom: { $regex: searchTerm, $options: 'i' } },
-        { telephone: { $regex: searchTerm, $options: 'i' } },
-        { numeroAdherent: { $regex: searchTerm, $options: 'i' } },
-        { 'compteChift.numeroCompte': { $regex: searchTerm, $options: 'i' } }
+        { nom: searchRegex },
+        { prenom: searchRegex },
+        { telephone: searchRegex },
+        { numeroUtilisateur: searchRegex }
       ]
-    }).limit(20);
-
-    return adherents;
+    });
   }
 }
 
-export default new AdhérentService();
+export default new UtilisateurService();

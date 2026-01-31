@@ -25,7 +25,7 @@ export interface IMaker extends Document {
   estPresidentGroupement: boolean;
   dateEnrolement: Date;
   maitriseChift: boolean;
-  nombreAdhérentsOrientés: number; // Nombre d'adhérents enrôlés par ce Maker
+  nombreUtilisateursOrientés: number; // Nombre d'utilisateurs enrôlés par ce Maker
   mutuelleProche?: string;
   
   // Lien d'accès envoyé après enrôlement
@@ -78,7 +78,7 @@ const MakerSchema = new Schema<IMaker>(
     estPresidentGroupement: { type: Boolean, default: false },
     dateEnrolement: { type: Date, default: Date.now },
     maitriseChift: { type: Boolean, default: false },
-    nombreAdhérentsOrientés: { type: Number, default: 0 },
+    nombreUtilisateursOrientés: { type: Number, default: 0 },
     mutuelleProche: { type: String },
     lienAcces: { type: String },
     dateLienEnvoye: { type: Date }

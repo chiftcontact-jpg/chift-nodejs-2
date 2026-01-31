@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, UserPlus, MoreVertical, Users, Crown, Briefcase, UserCheck, Banknote, Shield, Edit, Trash2, Eye, Lock, Unlock } from 'lucide-react';
+import { Search, Filter, UserPlus, MoreVertical, Users, Crown, Briefcase, UserCheck, Banknote, Shield, Edit, Trash2, Eye, Lock, Unlock, Phone, MapPin } from 'lucide-react';
 import { NouvelUtilisateurModal, UtilisateurFormData } from '../components/NouvelUtilisateurModal';
 import { type User, useAuthStore } from '../store/authStore';
 import { userAPI } from '../lib/api';
@@ -110,7 +110,16 @@ export const UtilisateursPage: React.FC = () => {
         telephone: userData.telephone,
         whatsapp: userData.telephone, // Utiliser le même numéro par défaut
         cni: userData.cni,
+        adresse: userData.adresse,
+        region: userData.region,
+        departement: userData.departement,
+        commune: userData.commune,
+        dateNaissance: userData.dateNaissance,
+        groupeSanguin: userData.groupeSanguin,
         profession: userData.profession,
+        leket: userData.leket,
+        csu: userData.csu,
+        adhesion: userData.adhesion,
         beneficiaires: userData.beneficiaires
           .filter(b => b.nom && b.prenom) // Filtrer les bénéficiaires vides
           .map(b => ({
@@ -134,68 +143,88 @@ export const UtilisateursPage: React.FC = () => {
 
   const stats = [
     { 
-      label: 'Total Utilisateurs', 
+      label: 'Total Adhérents', 
       value: statistics?.total || 0, 
       icon: Users, 
-      color: 'blue' 
+      color: 'teal' 
     },
     { 
       label: 'Administrateurs', 
       value: statistics?.byRole['ADMIN'] || 0, 
       icon: Crown, 
-      color: 'purple' 
+      color: 'indigo' 
     },
     { 
       label: 'Agents', 
       value: statistics?.byRole['AGENT'] || 0, 
       icon: Briefcase, 
-      color: 'orange' 
+      color: 'blue' 
     },
     { 
-      label: 'Adhérents', 
-      value: statistics?.byRole['ADHERENT'] || 0, 
-      icon: UserCheck, 
-      color: 'green' 
+      label: 'Superviseurs', 
+      value: statistics?.byRole['SUPERVISEUR'] || 0, 
+      icon: Shield, 
+      color: 'amber' 
     },
     { 
       label: 'Makers', 
       value: statistics?.byRole['MAKER'] || 0, 
       icon: Banknote, 
-      color: 'teal' 
+      color: 'rose' 
+    },
+    { 
+      label: 'Adhérents', 
+      value: (statistics?.byRole['ADHERENT'] || 0) + (statistics?.byRole['USER'] || 0), 
+      icon: UserCheck, 
+      color: 'emerald' 
     }
   ];
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'ADMIN': return 'Administrateur';
+      case 'AGENT': return 'Agent';
+      case 'MAKER': return 'Maker';
+      case 'UTILISATEUR':
+      case 'ADHERENT': return 'Adhérent';
+      case 'SUPERVISEUR': return 'Superviseur';
+      default: return role;
+    }
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
+        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
       case 'AGENT':
-        return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'MAKER':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'ADHERENT':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'SUPERVISEUR':
-        return 'bg-cyan-100 text-cyan-700 border-cyan-200';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
+      case 'MAKER':
+        return 'bg-rose-50 text-rose-700 border-rose-200';
+      case 'UTILISATEUR':
+      case 'ADHERENT':
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
   const getAvatarColor = (role: string) => {
     switch (role) {
       case 'ADMIN':
-        return 'bg-yellow-400';
+        return 'bg-indigo-500';
       case 'AGENT':
-        return 'bg-purple-400';
-      case 'MAKER':
-        return 'bg-pink-400';
-      case 'ADHERENT':
-        return 'bg-purple-400';
+        return 'bg-blue-500';
       case 'SUPERVISEUR':
-        return 'bg-cyan-400';
+        return 'bg-amber-500';
+      case 'MAKER':
+        return 'bg-rose-500';
+      case 'UTILISATEUR':
+      case 'ADHERENT':
+        return 'bg-emerald-500';
       default:
-        return 'bg-gray-400';
+        return 'bg-gray-500';
     }
   };
 
@@ -205,15 +234,38 @@ export const UtilisateursPage: React.FC = () => {
         return <Crown className="w-3 h-3" />;
       case 'AGENT':
         return <Briefcase className="w-3 h-3" />;
-      case 'MAKER':
-        return <Users className="w-3 h-3" />;
-      case 'ADHERENT':
-        return <UserCheck className="w-3 h-3" />;
       case 'SUPERVISEUR':
         return <Shield className="w-3 h-3" />;
+      case 'MAKER':
+        return <Users className="w-3 h-3" />;
+      case 'UTILISATEUR':
+      case 'ADHERENT':
+        return <UserCheck className="w-3 h-3" />;
       default:
         return null;
     }
+  };
+
+  const getLeketStatus = (user: any) => {
+    if (user.leket?.souscrit) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+          LEKET
+        </span>
+      );
+    }
+    return null;
+  };
+
+  const getCsuStatus = (user: any) => {
+    if (user.csu?.actif) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+          CSU
+        </span>
+      );
+    }
+    return null;
   };
 
   const filteredUsers = users.filter(user => {
@@ -230,7 +282,7 @@ export const UtilisateursPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement des utilisateurs...</p>
+          <p className="mt-4 text-gray-600">Chargement des adhérents...</p>
         </div>
       </div>
     );
@@ -242,171 +294,197 @@ export const UtilisateursPage: React.FC = () => {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestion des Utilisateurs</h1>
-            <p className="text-sm text-gray-500 mt-1">Gérez et suivez tous les utilisateurs du système</p>
+            <h1 className="text-2xl font-bold text-gray-900">Gestion des Adhérents</h1>
+            <p className="text-sm text-gray-500 mt-1">Gérez et suivez tous les adhérents du système</p>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => navigate('nouveau')}
             className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors shadow-lg"
           >
             <UserPlus className="w-5 h-5" />
-            Nouvel Utilisateur
+            Nouvel Adhérent
           </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             const colorClasses = {
+              teal: 'bg-teal-100 text-teal-600',
+              indigo: 'bg-indigo-100 text-indigo-600',
               blue: 'bg-blue-100 text-blue-600',
-              purple: 'bg-purple-100 text-purple-600',
-              orange: 'bg-orange-100 text-orange-600',
-              green: 'bg-green-100 text-green-600',
-              teal: 'bg-teal-100 text-teal-600'
+              emerald: 'bg-emerald-100 text-emerald-600',
+              rose: 'bg-rose-100 text-rose-600',
+              amber: 'bg-amber-100 text-amber-600'
             }[stat.color];
 
             return (
-              <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses}`}>
-                    <Icon className="w-5 h-5" />
+              <div key={index} className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClasses} shadow-inner`}>
+                    <Icon className="w-6 h-6" />
                   </div>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">{stat.label}</p>
+                <p className="text-2xl font-bold text-gray-900 tracking-tight">{stat.value.toLocaleString()}</p>
               </div>
             );
           })}
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 mb-6">
-          <div className="p-4 flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 mb-8 shadow-sm overflow-hidden">
+          <div className="p-5 flex flex-col sm:flex-row gap-4 items-center bg-white">
             {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="flex-1 w-full relative group">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-teal-500 transition-colors" />
               <input
                 type="text"
-                placeholder="Rechercher par nom, email..."
+                placeholder="Rechercher un adhérent..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none text-sm"
               />
             </div>
 
             {/* Role Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[160px]"
+                >
+                  <option value="all">Tous les rôles</option>
+                  <option value="ADMIN">Administrateurs</option>
+                  <option value="AGENT">Agents</option>
+                  <option value="SUPERVISEUR">Superviseurs</option>
+                  <option value="MAKER">Makers</option>
+                  <option value="UTILISATEUR">Adhérents</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                </div>
+              </div>
+
+              {/* Items per page */}
               <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none text-sm font-medium text-gray-700"
               >
-                <option value="all">Tous les rôles</option>
-                <option value="ADMIN">Administrateurs</option>
-                <option value="AGENT">Agents</option>
-                <option value="MAKER">Makers</option>
-                <option value="ADHERENT">Adhérents</option>
-                <option value="SUPERVISEUR">Superviseurs</option>
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
               </select>
             </div>
-
-            {/* Items per page */}
-            <select
-              value={itemsPerPage}
-              onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
           </div>
         </div>
 
         {/* Users Table */}
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    <input type="checkbox" className="rounded border-gray-300" />
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-200">
+                  <th className="px-6 py-4">
+                    <input type="checkbox" className="rounded-md border-gray-300 text-teal-600 focus:ring-teal-500 w-4 h-4" />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Utilisateur ⇅
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Informations Adhérent
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Email ⇅
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Localisation & Code
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Téléphone
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
+                    Services
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
                     Rôles
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
                     Statut
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => navigate(`/utilisateur/${user._id}`)}>
-                    <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
-                      <input type="checkbox" className="rounded border-gray-300" />
+                  <tr 
+                    key={user._id} 
+                    className="hover:bg-teal-50/30 transition-colors group cursor-pointer" 
+                    onClick={() => navigate(`/utilisateur/${user._id}`)}
+                  >
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" className="rounded-md border-gray-300 text-teal-600 focus:ring-teal-500 w-4 h-4" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 ${getAvatarColor(user.rolePrincipal)} rounded-full flex items-center justify-center text-white font-semibold text-sm`}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-11 h-11 ${getAvatarColor(user.rolePrincipal)} rounded-xl flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform`}>
                           <span className="text-sm">{user.prenom[0]}{user.nom[0]}</span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{user.prenom} {user.nom}</p>
-                          <p className="text-xs text-gray-500">@{user.username}</p>
+                          <p className="font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">{user.prenom} {user.nom}</p>
+                          <p className="text-xs text-gray-500 font-medium">@{user.username}</p>
+                          <p className="text-[10px] text-teal-600 font-bold mt-0.5">{user.codeUtilisateur || 'N/A'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
-                      {user.email}
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-700 font-medium flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-gray-400" />
+                          {user.commune || user.departement || 'Non défini'}
+                        </p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <Phone className="w-3 h-3" />
+                          {user.telephone}
+                        </p>
+                      </div>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-700">
-                      {user.telephone}
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex flex-col gap-1 items-center">
+                        {getLeketStatus(user)}
+                        {getCsuStatus(user)}
+                        {!user.leket?.souscrit && !user.csu?.actif && (
+                          <span className="text-xs text-gray-400 italic">Aucun</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getRoleColor(user.rolePrincipal)}`}>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border ${getRoleColor(user.rolePrincipal)} shadow-sm`}>
                         {getRoleIcon(user.rolePrincipal)}
-                        {user.rolePrincipal === 'ADMIN' && 'Admin'}
-                        {user.rolePrincipal === 'AGENT' && 'Agent'}
-                        {user.rolePrincipal === 'MAKER' && 'Maker'}
-                        {user.rolePrincipal === 'ADHERENT' && 'Adhérent'}
-                        {user.rolePrincipal === 'SUPERVISEUR' && 'Superviseur'}
+                        {getRoleLabel(user.rolePrincipal)}
                       </span>
                     </td>
-                    <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked={user.statut === 'actif'} className="sr-only peer" readOnly />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                        <input 
+                          type="checkbox" 
+                          checked={user.statut === 'actif'} 
+                          className="sr-only peer" 
+                          onChange={() => handleStatusChange(user._id, user.statut === 'actif' ? 'inactif' : 'actif')}
+                        />
+                        <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
                       </label>
                     </td>
-                    <td className="px-4 py-4 relative" onClick={(e) => e.stopPropagation()}>
-                      <button 
-                        onClick={() => setOpenMenuId(openMenuId === user._id ? null : user._id)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <MoreVertical className="w-5 h-5 text-gray-600" />
-                      </button>
-                      
-                      {/* Menu déroulant */}
-                      {openMenuId === user._id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                          <div className="py-1">
+                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="relative inline-block text-left">
+                        <button 
+                          onClick={() => setOpenMenuId(openMenuId === user._id ? null : user._id)}
+                          className="p-2 hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 rounded-lg transition-all"
+                        >
+                          <MoreVertical className="w-5 h-5 text-gray-500" />
+                        </button>
+                        
+                        {openMenuId === user._id && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-1 overflow-hidden">
                             <button
                               onClick={() => {
                                 navigate(`/utilisateur/${user._id}`);
@@ -459,8 +537,8 @@ export const UtilisateursPage: React.FC = () => {
                               Supprimer
                             </button>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
