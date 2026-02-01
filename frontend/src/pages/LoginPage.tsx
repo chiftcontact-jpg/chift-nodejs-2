@@ -29,21 +29,21 @@ const LoginPage = () => {
         
         // Redirection forcée vers le changement de mot de passe si nécessaire
         if (user.mustChangePassword) {
-          navigate('/mon-profil')
+          window.location.href = '/mon-profil'
           return
         }
 
-        // Redirection selon le rôle principal
+        // Redirection selon le rôle principal via window.location pour assurer un reset de l'état si besoin
         if (user.rolePrincipal === 'ADMIN') {
-          navigate('/dashboard')
+          window.location.href = '/dashboard'
         } else if (user.rolePrincipal === 'AGENT' || user.rolePrincipal === 'SUPERVISEUR') {
-          navigate('/profil-agent')
+          window.location.href = '/profil-agent'
         } else if (user.rolePrincipal === 'MAKER') {
-          navigate('/caisse-details') // Rediriger vers sa caisse
+          window.location.href = '/caisse-details'
         } else if (user.rolePrincipal === 'UTILISATEUR') {
-          navigate('/profil-membre')
+          window.location.href = '/profil-membre'
         } else {
-          navigate('/dashboard')
+          window.location.href = '/'
         }
       } else {
         setError(response.data.message || 'Erreur de connexion')

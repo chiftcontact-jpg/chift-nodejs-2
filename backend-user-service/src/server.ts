@@ -10,6 +10,9 @@ import logger from './utils/logger';
 
 const app: Application = express();
 
+// Faire confiance au proxy Railway
+app.set('trust proxy', 1);
+
 // Connexion à la base de données
 connectDB();
 

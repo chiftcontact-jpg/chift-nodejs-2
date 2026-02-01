@@ -30,13 +30,16 @@ import { ProfilUtilisateurPage } from './pages/ProfilUtilisateurPage'
 import { useAuthStore } from './store/authStore'
 
 function App() {
-  const { isAuthenticated, user } = useAuthStore()
-  const isAdmin = user?.rolePrincipal === 'ADMIN'
+  const { isAuthenticated, user, hasRole } = useAuthStore()
+  const isAdmin = hasRole('ADMIN')
+  const isAgent = hasRole('AGENT') || hasRole('SUPERVISEUR')
+  const isMaker = hasRole('MAKER')
+  const isUtilisateur = hasRole('UTILISATEUR')
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/" replace />} />
         <Route path="/set-password" element={<SetPasswordPage />} />
         <Route path="/reset-password" element={<SetPasswordPage />} />
         
@@ -62,8 +65,16 @@ function App() {
               </Route>
             ) : (
               <Route path="/" element={<Layout />}>
-                <Route index element={<HomePage />} />
+                <Route index element={
+                  isAgent ? <Navigate to="/profil-agent" replace /> :
+                  isMaker ? <Navigate to="/caisse-details" replace /> :
+                  isUtilisateur ? <Navigate to="/profil-membre" replace /> :
+                  <HomePage />
+                } />
                 <Route path="mon-profil" element={<ProfilUtilisateurPage />} />
+                <Route path="profil-agent" element={<ProfilAgentPage />} />
+                <Route path="profil-membre" element={<ProfilMembrePage />} />
+                <Route path="caisse-details" element={<CaisseDetailsPage />} />
                 <Route path="communautes" element={<CommunautesPage />} />
                 <Route path="communaute/:id/caisses" element={<CommunauteCaissesPage />} />
                 <Route path="caisse/:id" element={<CaisseDetailsPage />} />

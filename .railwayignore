@@ -1,3 +1,7 @@
+*.rar
+*.zip
+*.7z
+*.tar.gz
 node_modules
 dist
 .git

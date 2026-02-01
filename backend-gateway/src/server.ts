@@ -14,6 +14,9 @@ import { errorHandler, notFound } from './middlewares/errorHandler';
 
 const app = express();
 
+// Faire confiance au proxy Railway (nécessaire pour express-rate-limit)
+app.set('trust proxy', 1);
+
 // Log de bas niveau pour debugger les requêtes entrantes
 app.use((req, res, next) => {
   logger.info(`📥 [DEBUG] Requête reçue: ${req.method} ${req.url}`, {

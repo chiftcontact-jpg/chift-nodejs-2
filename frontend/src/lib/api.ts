@@ -5,7 +5,8 @@ import { useAuthStore } from '../store/authStore'
 // Configuration de l'URL du Gateway
 // En production sur Vercel, on utilise VITE_API_URL configuré sur Railway
 // En développement local, on utilise le proxy Vite (/api)
-const GATEWAY_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_GATEWAY_URL || '/api'
+const rawUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_GATEWAY_URL || '/api'
+const GATEWAY_URL = rawUrl.trim().replace(/\/$/, '')
 
 console.log('🔧 Gateway URL configuré:', GATEWAY_URL)
 
