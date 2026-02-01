@@ -26,6 +26,11 @@ const createPapeAdmin = async () => {
       nom: 'Diakhaté',
       prenom: 'Pape Seyni',
       telephone: '221777777777',
+      adresse: 'Dakar Plateau',
+      region: 'Dakar',
+      departement: 'Dakar',
+      commune: 'Dakar Plateau',
+      dateNaissance: new Date('1990-01-01'),
       statut: 'actif',
       permissions: []
     });
@@ -36,10 +41,15 @@ const createPapeAdmin = async () => {
       email: 'admin@chift.sn',
       password: hashedPasswordAdmin,
       rolePrincipal: 'ADMIN',
-      roles: [{ role: 'ADMIN' }],
+      roles: [{ role: 'ADMIN', dateAttribution: new Date(), actif: true }],
       nom: 'Admin',
       prenom: 'System',
       telephone: '221777777777',
+      adresse: 'Dakar Plateau',
+      region: 'Dakar',
+      departement: 'Dakar',
+      commune: 'Dakar Plateau',
+      dateNaissance: new Date('1990-01-01'),
       statut: 'actif',
       permissions: []
     });

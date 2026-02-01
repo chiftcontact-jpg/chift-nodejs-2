@@ -2,7 +2,7 @@
   "name": "chift-gateway",
   "version": "1.0.0",
   "description": "API Gateway HTTPS pour les microservices CHIFT",
-  "main": "src/server.ts",
+  "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "tsc",
