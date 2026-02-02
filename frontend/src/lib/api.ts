@@ -312,6 +312,9 @@ export const caisseAPI = {
 export const agentAPI = {
   // Récupérer tous les agents
   getAll: (filters?: {
+    region?: string;
+    departement?: string;
+    commune?: string;
     statut?: string;
     search?: string;
   }) => {

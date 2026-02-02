@@ -16,6 +16,7 @@ export const DemandeSokhlaCommunautairePage: React.FC = () => {
     commune: ''
   });
   const [showError, setShowError] = useState(false);
+  const [communes, setCommunes] = useState<any[]>([]);
 
   useEffect(() => {
     if (formData.region) {
@@ -24,6 +25,19 @@ export const DemandeSokhlaCommunautairePage: React.FC = () => {
       setDepartements([]);
     }
   }, [formData.region]);
+
+  useEffect(() => {
+    if (formData.region && formData.departement) {
+      const dept = departements.find(d => d.nom === formData.departement);
+      if (dept) {
+        setCommunes(getCommunesByDepartement(formData.region, dept.code));
+      } else {
+        setCommunes([]);
+      }
+    } else {
+      setCommunes([]);
+    }
+  }, [formData.region, formData.departement, departements]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -210,12 +224,9 @@ export const DemandeSokhlaCommunautairePage: React.FC = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white disabled:opacity-50"
                 >
                   <option value="">Sélectionnez une commune</option>
-                  {formData.region && formData.departement && (() => {
-                    const deptCode = getDepartements(formData.region).find(d => d.nom === formData.departement)?.code;
-                    return deptCode ? getCommunesByDepartement(formData.region, deptCode).map(c => (
-                      <option key={c.code} value={c.nom}>{c.nom}</option>
-                    )) : [];
-                  })()}
+                  {communes.map(c => (
+                    <option key={c.code} value={c.nom}>{c.nom}</option>
+                  ))}
                 </select>
               </div>
             </div>

@@ -40,8 +40,11 @@ router.post(
     changeOrigin: true,
     selfHandleResponse: false,
     pathRewrite: (path, req) => {
+      // Si l'URL commence déjà par /api/users, on la garde telle quelle
+      // Sinon on ajoute le préfixe /api/users au chemin relatif
       if (req.originalUrl.startsWith('/api/users')) return req.originalUrl;
-      return `/api/users${path}`;
+      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+      return `/api/users${cleanPath === '/' ? '' : cleanPath}`;
     },
     onProxyReq: (proxyReq, req: any, res) => {
       fixRequestBody(proxyReq, req);
@@ -77,7 +80,8 @@ router.use(
     selfHandleResponse: false,
     pathRewrite: (path, req) => {
       if (req.originalUrl.startsWith('/api/users')) return req.originalUrl;
-      return `/api/users${path}`;
+      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+      return `/api/users${cleanPath === '/' ? '' : cleanPath}`;
     },
     onProxyReq: (proxyReq, req: any, res) => {
       // Transférer les informations utilisateur dans les headers AVANT fixRequestBody
@@ -120,7 +124,8 @@ router.use(
     selfHandleResponse: false,
     pathRewrite: (path, req) => {
       if (req.originalUrl.startsWith('/api/caisses')) return req.originalUrl;
-      return `/api/caisses${path}`;
+      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+      return `/api/caisses${cleanPath === '/' ? '' : cleanPath}`;
     },
     onProxyReq: (proxyReq, req: any, res) => {
       // Transférer les informations utilisateur dans les headers AVANT fixRequestBody
@@ -163,7 +168,8 @@ router.use(
     pathRewrite: (path, req) => {
       if (req.originalUrl.startsWith('/api/comptes')) return req.originalUrl;
       if (req.originalUrl.startsWith('/api/services')) return req.originalUrl;
-      return `/api${req.originalUrl}`;
+      const cleanPath = req.originalUrl.startsWith('/api') ? req.originalUrl : `/api${req.originalUrl}`;
+      return cleanPath;
     },
     onProxyReq: (proxyReq, req: any, res) => {
       if (req.user) {
@@ -201,7 +207,9 @@ router.use(
     changeOrigin: true,
     selfHandleResponse: false,
     pathRewrite: (path, req) => {
-      return req.originalUrl.startsWith('/api') ? req.originalUrl : `/api${req.originalUrl}`;
+      if (req.originalUrl.startsWith('/api')) return req.originalUrl;
+      const cleanPath = req.originalUrl.startsWith('/') ? req.originalUrl : `/${req.originalUrl}`;
+      return `/api${cleanPath}`;
     },
     onProxyReq: (proxyReq, req: any, res) => {
       if (req.user) {
