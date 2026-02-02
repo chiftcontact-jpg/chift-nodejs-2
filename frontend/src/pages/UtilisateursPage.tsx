@@ -4,7 +4,7 @@ import { Search, Filter, UserPlus, MoreVertical, Users, Crown, Briefcase, UserCh
 import { NouvelUtilisateurModal, UtilisateurFormData } from '../components/NouvelUtilisateurModal';
 import { type User, useAuthStore } from '../store/authStore';
 import { userAPI } from '../lib/api';
-import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
+import { getRegions, getDepartements, getCommunesByDepartement, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 
 export const UtilisateursPage: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ export const UtilisateursPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
   const [deptFilter, setDeptFilter] = useState('all');
+  const [communeFilter, setCommuneFilter] = useState('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,7 @@ export const UtilisateursPage: React.FC = () => {
   useEffect(() => {
     fetchUsers();
     fetchStatistics();
-  }, [currentPage, roleFilter, regionFilter, deptFilter, itemsPerPage]);
+  }, [currentPage, roleFilter, regionFilter, deptFilter, communeFilter, itemsPerPage]);
 
   // Fermer le menu quand on clique ailleurs
   useEffect(() => {
@@ -59,6 +60,7 @@ export const UtilisateursPage: React.FC = () => {
       }
       
       if (deptFilter !== 'all') filters.departement = deptFilter;
+      if (communeFilter !== 'all') filters.commune = communeFilter;
 
       const response = await userAPI.getAll(filters);
       
@@ -75,6 +77,9 @@ export const UtilisateursPage: React.FC = () => {
 
   const regions = getRegions();
   const departements = regionFilter !== 'all' ? getDepartements(regionFilter) : [];
+  const communes = (regionFilter !== 'all' && deptFilter !== 'all') 
+    ? getCommunesByDepartement(regionFilter, deptFilter) 
+    : [];
 
   const fetchStatistics = async () => {
     try {
@@ -393,6 +398,7 @@ export const UtilisateursPage: React.FC = () => {
                   onChange={(e) => {
                     setRegionFilter(e.target.value);
                     setDeptFilter('all');
+                    setCommuneFilter('all');
                   }}
                   className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[150px]"
                 >
@@ -411,13 +417,35 @@ export const UtilisateursPage: React.FC = () => {
                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <select
                   value={deptFilter}
-                  onChange={(e) => setDeptFilter(e.target.value)}
+                  onChange={(e) => {
+                    setDeptFilter(e.target.value);
+                    setCommuneFilter('all');
+                  }}
                   disabled={regionFilter === 'all'}
                   className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[150px] disabled:opacity-50"
                 >
                   <option value="all">Tous départements</option>
                   {departements.map(d => (
                     <option key={d.code} value={d.nom}>{d.nom}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                </div>
+              </div>
+
+              {/* Commune Filter */}
+              <div className="relative flex-1 sm:flex-none">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={communeFilter}
+                  onChange={(e) => setCommuneFilter(e.target.value)}
+                  disabled={deptFilter === 'all'}
+                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[150px] disabled:opacity-50"
+                >
+                  <option value="all">Toutes communes</option>
+                  {communes.map(c => (
+                    <option key={c.code} value={c.nom}>{c.nom}</option>
                   ))}
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">

@@ -95,6 +95,8 @@ class UtilisateurService {
     if (filters.statut) query.statut = filters.statut;
     if (filters.typeUtilisateur) query.typeUtilisateur = filters.typeUtilisateur;
     if (filters.region) query.region = filters.region;
+    if (filters.departement) query.departement = filters.departement;
+    if (filters.commune) query.commune = filters.commune;
     if (filters.communauteId) query.communauteId = filters.communauteId;
 
     const utilisateurs = await Utilisateur.find(query)

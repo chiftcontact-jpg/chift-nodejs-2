@@ -101,11 +101,22 @@ export const userAPI = {
   getAll: (filters?: {
     role?: string
     statut?: string
+    region?: string
+    departement?: string
+    commune?: string
     page?: number
     limit?: number
   }) => {
-    const params = new URLSearchParams(filters as any).toString()
-    return fetchAPI(`/users${params ? `?${params}` : ''}`)
+    const params = new URLSearchParams()
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString())
+        }
+      })
+    }
+    const queryString = params.toString()
+    return fetchAPI(`/users${queryString ? `?${queryString}` : ''}`)
   },
 
   // Récupérer un utilisateur par ID

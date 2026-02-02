@@ -84,11 +84,14 @@ export class UserController {
   // Obtenir tous les utilisateurs
   async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
-      const { role, statut, page, limit } = req.query;
+      const { role, statut, region, departement, commune, page, limit } = req.query;
 
       const result = await userService.getAllUsers({
         role: role as string,
         statut: statut as string,
+        region: region as string,
+        departement: departement as string,
+        commune: commune as string,
         page: page ? parseInt(page as string) : undefined,
         limit: limit ? parseInt(limit as string) : undefined
       });

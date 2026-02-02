@@ -39,7 +39,10 @@ router.post(
     target: config.services.user,
     changeOrigin: true,
     selfHandleResponse: false,
-    pathRewrite: (path) => `/api/users${path}`,
+    pathRewrite: (path, req) => {
+      if (req.originalUrl.startsWith('/api/users')) return req.originalUrl;
+      return `/api/users${path}`;
+    },
     onProxyReq: (proxyReq, req: any, res) => {
       fixRequestBody(proxyReq, req);
       logger.info('Proxy vers user-service (public)', {
@@ -72,7 +75,10 @@ router.use(
     target: config.services.user,
     changeOrigin: true,
     selfHandleResponse: false,
-    pathRewrite: (path) => `/api/users${path}`,
+    pathRewrite: (path, req) => {
+      if (req.originalUrl.startsWith('/api/users')) return req.originalUrl;
+      return `/api/users${path}`;
+    },
     onProxyReq: (proxyReq, req: any, res) => {
       // Transférer les informations utilisateur dans les headers AVANT fixRequestBody
       if (req.user) {
@@ -112,7 +118,10 @@ router.use(
     target: config.services.caisse,
     changeOrigin: true,
     selfHandleResponse: false,
-    pathRewrite: (path) => `/api/caisses${path}`,
+    pathRewrite: (path, req) => {
+      if (req.originalUrl.startsWith('/api/caisses')) return req.originalUrl;
+      return `/api/caisses${path}`;
+    },
     onProxyReq: (proxyReq, req: any, res) => {
       // Transférer les informations utilisateur dans les headers AVANT fixRequestBody
       if (req.user) {

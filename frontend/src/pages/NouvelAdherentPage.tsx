@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { userAPI } from '../lib/api';
 import type { UtilisateurFormData, BeneficiaireFormData } from '../components/NouvelUtilisateurModal';
-import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
+import { getRegions, getDepartements, getCommunesByDepartement, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 
 const createEmptyBeneficiaire = (): BeneficiaireFormData => ({
   nom: '',
@@ -92,7 +92,14 @@ export const NouvelAdherentPage: React.FC = () => {
       setFormData(prev => ({
         ...prev,
         region: val as string,
-        departement: '' // Reset department when region changes
+        departement: '', // Reset department when region changes
+        commune: '' // Reset commune when region changes
+      }));
+    } else if (name === 'departement') {
+      setFormData(prev => ({
+        ...prev,
+        departement: val as string,
+        commune: '' // Reset commune when department changes
       }));
     } else if (name.includes('.')) {
       const [parent, child, grandChild] = name.split('.');
@@ -307,6 +314,24 @@ export const NouvelAdherentPage: React.FC = () => {
                     {formData.region && getDepartements(formData.region).map(d => (
                       <option key={d.code} value={d.nom}>{d.nom}</option>
                     ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">Commune</label>
+                  <select 
+                    name="commune" 
+                    value={formData.commune} 
+                    onChange={handleChange} 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    disabled={!formData.departement}
+                  >
+                    <option value="">Sélectionner une commune</option>
+                    {formData.region && formData.departement && (() => {
+                      const deptCode = getDepartements(formData.region).find(d => d.nom === formData.departement)?.code;
+                      return deptCode ? getCommunesByDepartement(formData.region, deptCode).map(c => (
+                        <option key={c.code} value={c.nom}>{c.nom}</option>
+                      )) : [];
+                    })()}
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">

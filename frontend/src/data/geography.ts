@@ -2160,6 +2160,26 @@ export const getCommunes = (regionCode: string, departementCode: string, arrondi
   }));
 };
 
+// Fonction utilitaire pour obtenir toutes les communes d'un département (sans passer par l'arrondissement)
+export const getCommunesByDepartement = (regionCode: string, departementCode: string) => {
+  const region = (SENEGAL_GEOGRAPHIC_DATA as any)[regionCode];
+  if (!region) return [];
+
+  // Trouver le département par son code
+  const departementEntry = Object.values(region.departements).find((dept: any) => dept.code === departementCode);
+  if (!departementEntry) return [];
+
+  // Aplatir toutes les communes de tous les arrondissements du département
+  const allCommunes = (departementEntry as any).arrondissements.reduce((acc: any[], arr: any) => {
+    return [...acc, ...arr.communes];
+  }, []);
+
+  return allCommunes.map((commune: any) => ({
+    code: commune.code,
+    nom: commune.nom
+  }));
+};
+
 // Fonction pour valider une structure géographique complète
 export const validateGeographicLocation = (region: string, departement: string, arrondissement: string, commune: string) => {
   const regionData = (SENEGAL_GEOGRAPHIC_DATA as any)[region];

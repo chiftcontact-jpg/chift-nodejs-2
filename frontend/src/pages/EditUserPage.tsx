@@ -13,7 +13,7 @@ import {
   X
 } from 'lucide-react';
 import { userAPI } from '../lib/api';
-import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
+import { getRegions, getDepartements, getCommunesByDepartement, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 import type { User as UserType } from '../store/authStore';
 
 export const EditUserPage: React.FC = () => {
@@ -129,7 +129,23 @@ export const EditUserPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'region') {
+      setFormData(prev => ({ 
+        ...prev, 
+        region: value, 
+        departement: '', 
+        commune: '' 
+      }));
+    } else if (name === 'departement') {
+      setFormData(prev => ({ 
+        ...prev, 
+        departement: value, 
+        commune: '' 
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const addBeneficiaire = () => {
@@ -342,18 +358,25 @@ export const EditUserPage: React.FC = () => {
                 </select>
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Commune
                 </label>
-                <input
-                  type="text"
+                <select
                   name="commune"
                   value={formData.commune}
                   onChange={handleChange}
-                  placeholder="Ex: Parcelles Assainies"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
+                  disabled={!formData.departement}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-50"
+                >
+                  <option value="">Sélectionner une commune</option>
+                  {formData.region && formData.departement && (() => {
+                    const deptCode = getDepartements(formData.region).find(d => d.nom === formData.departement)?.code;
+                    return deptCode ? getCommunesByDepartement(formData.region, deptCode).map(c => (
+                      <option key={c.code} value={c.nom}>{c.nom}</option>
+                    )) : [];
+                  })()}
+                </select>
               </div>
             </div>
           </div>

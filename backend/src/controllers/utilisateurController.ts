@@ -45,6 +45,8 @@ class UtilisateurController {
         statut: req.query.statut,
         typeUtilisateur: req.query.typeUtilisateur,
         region: req.query.region,
+        departement: req.query.departement,
+        commune: req.query.commune,
         communauteId: req.query.communauteId
       };
 

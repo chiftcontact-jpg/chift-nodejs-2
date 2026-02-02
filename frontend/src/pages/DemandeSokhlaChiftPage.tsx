@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, CreditCard, Wallet, AlertTriangle, Send, MapPin } from 'lucide-react';
-import { getRegions, getDepartements } from '../data/geography';
+import { getRegions, getDepartements, getCommunesByDepartement } from '../data/geography';
 
 export const DemandeSokhlaChiftPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,14 +39,17 @@ export const DemandeSokhlaChiftPage: React.FC = () => {
     }));
     
     if (name === 'region') {
-      setFormData(prev => ({ ...prev, departement: '' }));
+      setFormData(prev => ({ ...prev, departement: '', commune: '' }));
+    }
+    if (name === 'departement') {
+      setFormData(prev => ({ ...prev, commune: '' }));
     }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!formData.montantSouhaite || !formData.canalReception) {
+    if (!formData.montantSouhaite || !formData.canalReception || !formData.region || !formData.departement || !formData.commune) {
       setShowError(true);
       return;
     }
@@ -66,7 +69,7 @@ export const DemandeSokhlaChiftPage: React.FC = () => {
   };
 
   const isFormValid = formData.montantSouhaite && formData.canalReception && 
-     formData.region && formData.departement &&
+     formData.region && formData.departement && formData.commune &&
      parseFloat(formData.montantSouhaite) >= 501000 && 
      parseFloat(formData.montantSouhaite) <= 2000000;
 
@@ -199,6 +202,27 @@ export const DemandeSokhlaChiftPage: React.FC = () => {
                   {departements.map(d => (
                     <option key={d.code} value={d.nom}>{d.nom}</option>
                   ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Commune <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="commune"
+                  value={formData.commune}
+                  onChange={handleChange}
+                  disabled={!formData.departement}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white disabled:opacity-50"
+                >
+                  <option value="">Sélectionnez une commune</option>
+                  {formData.region && formData.departement && (() => {
+                    const deptCode = getDepartements(formData.region).find(d => d.nom === formData.departement)?.code;
+                    return deptCode ? getCommunesByDepartement(formData.region, deptCode).map(c => (
+                      <option key={c.code} value={c.nom}>{c.nom}</option>
+                    )) : [];
+                  })()}
                 </select>
               </div>
             </div>

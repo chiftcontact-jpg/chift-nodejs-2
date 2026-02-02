@@ -252,6 +252,9 @@ export class UserService {
   async getAllUsers(filters?: {
     role?: string;
     statut?: string;
+    region?: string;
+    departement?: string;
+    commune?: string;
     page?: number;
     limit?: number;
   }): Promise<{ users: IUser[]; total: number; page: number; pages: number }> {
@@ -263,6 +266,9 @@ export class UserService {
       const query: any = {};
       if (filters?.role) query.rolePrincipal = filters.role;
       if (filters?.statut) query.statut = filters.statut;
+      if (filters?.region) query.region = filters.region;
+      if (filters?.departement) query.departement = filters.departement;
+      if (filters?.commune) query.commune = filters.commune;
 
       const [users, total] = await Promise.all([
         User.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }),
