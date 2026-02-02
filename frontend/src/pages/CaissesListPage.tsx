@@ -15,7 +15,7 @@ import {
   Unlock
 } from 'lucide-react';
 import { caisseAPI } from '../lib/api';
-import { SENEGAL_GEOGRAPHIC_DATA, getRegions, getDepartements } from '../data/geography';
+import { SENEGAL_GEOGRAPHIC_DATA, getRegions, getDepartements, getCommunesByDepartement } from '../data/geography';
 
 interface Caisse {
   _id: string;
@@ -44,6 +44,7 @@ export const CaissesListPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('all');
   const [deptFilter, setDeptFilter] = useState('all');
+  const [communeFilter, setCommuneFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statutFilter, setStatutFilter] = useState('all');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -106,13 +107,14 @@ export const CaissesListPage: React.FC = () => {
     
     const matchesRegion = regionFilter === 'all' || caisse.region === (SENEGAL_GEOGRAPHIC_DATA as any)[regionFilter]?.nom;
     const matchesDept = deptFilter === 'all' || caisse.departement === deptFilter;
+    const matchesCommune = communeFilter === 'all' || caisse.commune === communeFilter;
     
-    return matchesSearch && matchesRegion && matchesDept;
+    return matchesSearch && matchesRegion && matchesDept && matchesCommune;
   });
 
   const regions = getRegions();
-  console.log('Regions:', regions);
   const departements = regionFilter !== 'all' ? getDepartements(regionFilter) : [];
+  const communes = (regionFilter !== 'all' && deptFilter !== 'all') ? getCommunesByDepartement(regionFilter, deptFilter) : [];
 
   const getStatutColor = (statut: string) => {
     switch (statut) {
@@ -247,6 +249,7 @@ export const CaissesListPage: React.FC = () => {
                     onChange={(e) => {
                       setRegionFilter(e.target.value);
                       setDeptFilter('all');
+                      setCommuneFilter('all');
                     }}
                   >
                     <option value="all">🌍 Toutes régions</option>
@@ -256,20 +259,42 @@ export const CaissesListPage: React.FC = () => {
                   </select>
                 </div>
 
-                {regionFilter !== 'all' && (
-                  <div className="relative min-w-[200px]">
-                    <select
-                      value={deptFilter}
-                      className="appearance-none w-full px-5 py-3 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium"
-                      onChange={(e) => setDeptFilter(e.target.value)}
-                    >
-                      <option value="all">🏘️ Tous départements</option>
-                      {departements.map(d => (
-                        <option key={d.code} value={d.nom}>{d.nom}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div className="relative min-w-[200px]">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select
+                    value={deptFilter}
+                    disabled={regionFilter === 'all'}
+                    className={`appearance-none w-full pl-9 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium ${
+                      regionFilter === 'all' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    onChange={(e) => {
+                      setDeptFilter(e.target.value);
+                      setCommuneFilter('all');
+                    }}
+                  >
+                    <option value="all">🏘️ Tous départements</option>
+                    {departements.map(d => (
+                      <option key={d.code} value={d.nom}>{d.nom}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="relative min-w-[200px]">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select
+                    value={communeFilter}
+                    disabled={deptFilter === 'all'}
+                    className={`appearance-none w-full pl-9 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium ${
+                      deptFilter === 'all' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    onChange={(e) => setCommuneFilter(e.target.value)}
+                  >
+                    <option value="all">🏘️ Toutes communes</option>
+                    {communes.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="relative">
                   <select

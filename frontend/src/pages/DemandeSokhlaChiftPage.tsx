@@ -8,6 +8,7 @@ export const DemandeSokhlaChiftPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [regions] = useState(getRegions());
   const [departements, setDepartements] = useState<any[]>([]);
+  const [communes, setCommunes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -28,8 +29,17 @@ export const DemandeSokhlaChiftPage: React.FC = () => {
       setDepartements(getDepartements(formData.region));
     } else {
       setDepartements([]);
+      setCommunes([]);
     }
   }, [formData.region]);
+
+  useEffect(() => {
+    if (formData.region && formData.departement) {
+      setCommunes(getCommunesByDepartement(formData.region, formData.departement));
+    } else {
+      setCommunes([]);
+    }
+  }, [formData.region, formData.departement]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -223,6 +233,24 @@ export const DemandeSokhlaChiftPage: React.FC = () => {
                       <option key={c.code} value={c.nom}>{c.nom}</option>
                     )) : [];
                   })()}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Commune <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="commune"
+                  value={formData.commune}
+                  onChange={handleChange}
+                  disabled={!formData.departement}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white disabled:opacity-50"
+                >
+                  <option value="">Sélectionnez une commune</option>
+                  {communes.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
                 </select>
               </div>
             </div>

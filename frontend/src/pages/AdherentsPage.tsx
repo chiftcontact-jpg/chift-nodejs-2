@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, Eye, Phone, MapPin, Clock } from 'lucide-react'
+import { Search, Eye, Phone, MapPin, Clock, Filter } from 'lucide-react'
 import api from '../lib/api'
 import { Utilisateur } from '../types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { SENEGAL_GEOGRAPHIC_DATA, getRegions, getDepartements, getCommunesByDepartement } from '../data/geography'
 
 const AdherentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUtilisateur, setSelectedUtilisateur] = useState<Utilisateur | null>(null)
+  const [regionFilter, setRegionFilter] = useState('all')
+  const [deptFilter, setDeptFilter] = useState('all')
+  const [communeFilter, setCommuneFilter] = useState('all')
 
   const { data, isLoading } = useQuery({
     queryKey: ['utilisateurs-liste'],
@@ -21,12 +25,23 @@ const AdherentsPage = () => {
   const utilisateurs: Utilisateur[] = data?.data || []
 
   const filteredUtilisateurs = utilisateurs.filter(
-    (u) =>
-      u.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.telephone.includes(searchTerm) ||
-      u.numeroUtilisateur.includes(searchTerm)
+    (u) => {
+      const matchesSearch = u.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.telephone.includes(searchTerm) ||
+        u.numeroUtilisateur.includes(searchTerm);
+      
+      const matchesRegion = regionFilter === 'all' || u.region === (SENEGAL_GEOGRAPHIC_DATA as any)[regionFilter]?.nom;
+      const matchesDept = deptFilter === 'all' || u.departement === deptFilter;
+      const matchesCommune = communeFilter === 'all' || u.commune === communeFilter;
+
+      return matchesSearch && matchesRegion && matchesDept && matchesCommune;
+    }
   )
+
+  const regions = getRegions();
+  const departements = regionFilter !== 'all' ? getDepartements(regionFilter) : [];
+  const communes = (regionFilter !== 'all' && deptFilter !== 'all') ? getCommunesByDepartement(regionFilter, deptFilter) : [];
 
   return (
     <div>
@@ -37,17 +52,82 @@ const AdherentsPage = () => {
         </p>
       </div>
 
-      {/* Search */}
-      <div className="card mb-6 shadow-sm border-teal-100">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-400" />
-          <input
-            type="text"
-            placeholder="Rechercher par nom, téléphone ou numéro utilisateur..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input pl-12 h-14 bg-gray-50 border-transparent focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all rounded-2xl"
-          />
+      {/* Search & Filters */}
+      <div className="card mb-6 shadow-sm border-teal-100 p-4">
+        <div className="flex flex-col space-y-4">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-teal-400" />
+            <input
+              type="text"
+              placeholder="Rechercher par nom, téléphone ou numéro utilisateur..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input pl-12 h-14 bg-gray-50 border-transparent focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all rounded-2xl w-full"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <select
+                value={regionFilter}
+                onChange={(e) => {
+                  setRegionFilter(e.target.value);
+                  setDeptFilter('all');
+                  setCommuneFilter('all');
+                }}
+                className="select pl-10 h-12 bg-gray-50 border-transparent focus:bg-white focus:border-teal-500 transition-all rounded-xl w-full appearance-none"
+              >
+                <option value="all">🌍 Toutes les régions</option>
+                {regions.map((region) => (
+                  <option key={region.code} value={region.code}>
+                    {region.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <select
+                value={deptFilter}
+                disabled={regionFilter === 'all'}
+                onChange={(e) => {
+                  setDeptFilter(e.target.value);
+                  setCommuneFilter('all');
+                }}
+                className={`select pl-10 h-12 bg-gray-50 border-transparent focus:bg-white focus:border-teal-500 transition-all rounded-xl w-full appearance-none ${
+                  regionFilter === 'all' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <option value="all">🏘️ Tous les départements</option>
+                {departements.map((dept) => (
+                  <option key={dept.code} value={dept.nom}>
+                    {dept.nom}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <select
+                value={communeFilter}
+                disabled={deptFilter === 'all'}
+                onChange={(e) => setCommuneFilter(e.target.value)}
+                className={`select pl-10 h-12 bg-gray-50 border-transparent focus:bg-white focus:border-teal-500 transition-all rounded-xl w-full appearance-none ${
+                  deptFilter === 'all' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                <option value="all">🏘️ Toutes les communes</option>
+                {communes.map((commune) => (
+                  <option key={commune} value={commune}>
+                    {commune}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
