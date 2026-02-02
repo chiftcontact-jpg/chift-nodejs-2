@@ -13,6 +13,7 @@ import {
   X
 } from 'lucide-react';
 import { userAPI } from '../lib/api';
+import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 import type { User as UserType } from '../store/authStore';
 
 export const EditUserPage: React.FC = () => {
@@ -31,13 +32,25 @@ export const EditUserPage: React.FC = () => {
     profession: '',
     rolePrincipal: 'UTILISATEUR' as const,
     statut: 'actif' as const,
+    region: '',
+    departement: '',
+    commune: '',
   });
+
+  const [regions] = useState(getRegions());
+  const [departements, setDepartements] = useState<any[]>([]);
   const [beneficiaires, setBeneficiaires] = useState<Array<{
     nom: string;
     prenom: string;
     relation: string;
     telephone: string;
   }>>([]);
+
+  useEffect(() => {
+    if (formData.region) {
+      setDepartements(getDepartements(formData.region));
+    }
+  }, [formData.region]);
 
   useEffect(() => {
     if (id) {
@@ -52,6 +65,16 @@ export const EditUserPage: React.FC = () => {
       
       if (response.data.success) {
         const user = response.data.data;
+        
+        // Trouver le code de la région à partir du nom
+        let regionCode = '';
+        if (user.region) {
+          const foundRegion = Object.entries(SENEGAL_GEOGRAPHIC_DATA).find(
+            ([_, data]) => (data as any).nom === user.region
+          );
+          if (foundRegion) regionCode = foundRegion[0];
+        }
+
         setFormData({
           username: user.username,
           email: user.email,
@@ -63,6 +86,9 @@ export const EditUserPage: React.FC = () => {
           profession: user.profession || '',
           rolePrincipal: user.rolePrincipal,
           statut: user.statut,
+          region: regionCode,
+          departement: user.departement || '',
+          commune: user.commune || '',
         });
         setBeneficiaires(user.beneficiaires || []);
       }
@@ -81,8 +107,13 @@ export const EditUserPage: React.FC = () => {
 
     try {
       setSaving(true);
+      
+      // Convertir le code région en nom pour le backend
+      const regionName = formData.region ? (SENEGAL_GEOGRAPHIC_DATA as any)[formData.region]?.nom : '';
+
       await userAPI.update(id, {
         ...formData,
+        region: regionName,
         beneficiaires: beneficiaires.filter(b => b.nom && b.prenom && b.relation)
       });
       
@@ -243,11 +274,11 @@ export const EditUserPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Identité et Profession */}
+          {/* Identité, Profession et Localisation */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Briefcase className="w-5 h-5 text-teal-600" />
-              Identité et Profession
+              Identité, Profession et Localisation
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -271,6 +302,56 @@ export const EditUserPage: React.FC = () => {
                   name="profession"
                   value={formData.profession}
                   onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Localisation */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Région
+                </label>
+                <select
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                >
+                  <option value="">Sélectionner une région</option>
+                  {regions.map(r => (
+                    <option key={r.code} value={r.code}>{r.nom}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Département
+                </label>
+                <select
+                  name="departement"
+                  value={formData.departement}
+                  onChange={handleChange}
+                  disabled={!formData.region}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-gray-50"
+                >
+                  <option value="">Sélectionner un département</option>
+                  {departements.map(d => (
+                    <option key={d.code} value={d.nom}>{d.nom}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Commune
+                </label>
+                <input
+                  type="text"
+                  name="commune"
+                  value={formData.commune}
+                  onChange={handleChange}
+                  placeholder="Ex: Parcelles Assainies"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>

@@ -4,11 +4,14 @@ import { Search, Filter, UserPlus, MoreVertical, Users, Crown, Briefcase, UserCh
 import { NouvelUtilisateurModal, UtilisateurFormData } from '../components/NouvelUtilisateurModal';
 import { type User, useAuthStore } from '../store/authStore';
 import { userAPI } from '../lib/api';
+import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 
 export const UtilisateursPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [regionFilter, setRegionFilter] = useState('all');
+  const [deptFilter, setDeptFilter] = useState('all');
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,7 +31,7 @@ export const UtilisateursPage: React.FC = () => {
   useEffect(() => {
     fetchUsers();
     fetchStatistics();
-  }, [currentPage, roleFilter, itemsPerPage]);
+  }, [currentPage, roleFilter, regionFilter, deptFilter, itemsPerPage]);
 
   // Fermer le menu quand on clique ailleurs
   useEffect(() => {
@@ -48,6 +51,14 @@ export const UtilisateursPage: React.FC = () => {
       };
       
       if (roleFilter !== 'all') filters.role = roleFilter;
+      
+      // Convertir le code région en nom pour le filtre backend
+      if (regionFilter !== 'all') {
+        const regionName = (SENEGAL_GEOGRAPHIC_DATA as any)[regionFilter]?.nom;
+        filters.region = regionName;
+      }
+      
+      if (deptFilter !== 'all') filters.departement = deptFilter;
 
       const response = await userAPI.getAll(filters);
       
@@ -61,6 +72,9 @@ export const UtilisateursPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const regions = getRegions();
+  const departements = regionFilter !== 'all' ? getDepartements(regionFilter) : [];
 
   const fetchStatistics = async () => {
     try {
@@ -350,14 +364,14 @@ export const UtilisateursPage: React.FC = () => {
               />
             </div>
 
-            {/* Role Filter */}
-            <div className="flex items-center gap-3 w-full sm:w-auto">
+            {/* Role, Region, Dept Filters */}
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-none">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[160px]"
+                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[150px]"
                 >
                   <option value="all">Tous les rôles</option>
                   <option value="ADMIN">Administrateurs</option>
@@ -365,6 +379,46 @@ export const UtilisateursPage: React.FC = () => {
                   <option value="SUPERVISEUR">Superviseurs</option>
                   <option value="MAKER">Makers</option>
                   <option value="UTILISATEUR">Adhérents</option>
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                </div>
+              </div>
+
+              {/* Region Filter */}
+              <div className="relative flex-1 sm:flex-none">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={regionFilter}
+                  onChange={(e) => {
+                    setRegionFilter(e.target.value);
+                    setDeptFilter('all');
+                  }}
+                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[150px]"
+                >
+                  <option value="all">Toutes régions</option>
+                  {regions.map(r => (
+                    <option key={r.code} value={r.code}>{r.nom}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                </div>
+              </div>
+
+              {/* Dept Filter */}
+              <div className="relative flex-1 sm:flex-none">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={deptFilter}
+                  onChange={(e) => setDeptFilter(e.target.value)}
+                  disabled={regionFilter === 'all'}
+                  className="pl-9 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none appearance-none text-sm font-medium text-gray-700 min-w-[150px] disabled:opacity-50"
+                >
+                  <option value="all">Tous départements</option>
+                  {departements.map(d => (
+                    <option key={d.code} value={d.nom}>{d.nom}</option>
+                  ))}
                 </select>
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
                   <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>

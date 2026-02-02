@@ -6,7 +6,7 @@ import {
   ChevronRight, Info, BarChart3, Globe
 } from 'lucide-react';
 import { Line, Doughnut, Bar } from 'react-chartjs-2';
-import { SENEGAL_GEOGRAPHIC_DATA } from '../data/geoData';
+import { SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 import { POLES_TERRITOIRES_DATA, PoleData } from '../data/polesData';
 import SenegalMap from '../components/SenegalMap';
 import { userAPI } from '../lib/api';
@@ -273,8 +273,8 @@ const DashboardPage: React.FC = () => {
           {[
             { label: 'Utilisateurs', value: stats.utilisateurs, icon: Users, color: 'blue', path: '/utilisateurs' },
             { label: 'Caisses Actives', value: stats.caisses, icon: Wallet, color: 'cyan', path: '/caisses' },
-            { label: 'Réseaux', value: stats.reseaux, icon: Network, color: 'purple', path: '/communautes' },
-            { label: 'Transactions', value: stats.transactions, icon: TrendingUp, color: 'orange', path: '/transactions' }
+            { label: 'Réseaux', value: stats.reseaux, icon: Network, color: 'purple', path: '/reseaux' },
+            { label: 'Transactions', value: stats.transactions, icon: TrendingUp, color: 'orange', path: '/dashboard' }
           ].map((item, idx) => (
             <div 
               key={idx}

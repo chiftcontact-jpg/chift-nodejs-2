@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { X, User, Mail, Phone, Shield, MapPin, CreditCard, Cake, Droplet, GraduationCap, Briefcase, Globe, Home, PlusCircle } from 'lucide-react';
+import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 
 interface NouvelUtilisateurModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (utilisateur: UtilisateurFormData) => void;
+  onSubmit: (utilisateur: any) => void;
 }
 
 export interface BeneficiaireFormData {
@@ -137,7 +138,13 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
     const { name, value, type } = e.target;
     const val = type === 'number' ? Number(value) : (type === 'checkbox' ? (e.target as HTMLInputElement).checked : value);
     
-    if (name.includes('.')) {
+    if (name === 'region') {
+      setFormData(prev => ({
+        ...prev,
+        region: val as string,
+        departement: '' // Reset department when region changes
+      }));
+    } else if (name.includes('.')) {
       const [parent, child, grandChild] = name.split('.');
       setFormData(prev => {
         if (grandChild) {
@@ -215,7 +222,11 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onSubmit(formData);
+      const payload = {
+        ...formData,
+        region: formData.region ? (SENEGAL_GEOGRAPHIC_DATA as any)[formData.region]?.nom : ''
+      };
+      onSubmit(payload);
       // Reset form
       setFormData({
         nom: '',
@@ -551,20 +562,9 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
                       className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
                     >
                       <option value="">Sélectionner</option>
-                      <option value="DAKAR">Dakar</option>
-                      <option value="THIES">Thiès</option>
-                      <option value="DIOURBEL">Diourbel</option>
-                      <option value="LOUGA">Louga</option>
-                      <option value="SAINT-LOUIS">Saint-Louis</option>
-                      <option value="KAOLACK">Kaolack</option>
-                      <option value="FATICK">Fatick</option>
-                      <option value="KAFFRINE">Kaffrine</option>
-                      <option value="KOLDA">Kolda</option>
-                      <option value="MATAM">Matam</option>
-                      <option value="SEDHIOU">Sédhiou</option>
-                      <option value="TAMBACOUNDA">Tambacounda</option>
-                      <option value="ZIGUINCHOR">Ziguinchor</option>
-                      <option value="KEDOUGOU">Kédougou</option>
+                      {getRegions().map(r => (
+                        <option key={r.code} value={r.code}>{r.nom}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -576,14 +576,18 @@ export const NouvelUtilisateurModal: React.FC<NouvelUtilisateurModalProps> = ({
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
+                    <select
                       name="departement"
                       value={formData.departement}
                       onChange={handleChange}
-                      placeholder="Ex: Dakar, Mbour..."
-                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
+                      className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      disabled={!formData.region}
+                    >
+                      <option value="">Sélectionner</option>
+                      {formData.region && getDepartements(formData.region).map(d => (
+                        <option key={d.code} value={d.nom}>{d.nom}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

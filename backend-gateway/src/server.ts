@@ -63,7 +63,13 @@ app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Logging des requêtes
+app.use((req, res, next) => {
+  console.log(`[GATEWAY] ${req.method} ${req.url} - Origin: ${req.get('origin')}`);
+  next();
+});
+
+// Routes API
 app.use('/api', routes);
 
 // Error handling

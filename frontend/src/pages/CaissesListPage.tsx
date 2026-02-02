@@ -15,6 +15,7 @@ import {
   Unlock
 } from 'lucide-react';
 import { caisseAPI } from '../lib/api';
+import { SENEGAL_GEOGRAPHIC_DATA, getRegions, getDepartements } from '../data/geography';
 
 interface Caisse {
   _id: string;
@@ -41,6 +42,8 @@ export const CaissesListPage: React.FC = () => {
   const [caisses, setCaisses] = useState<Caisse[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [regionFilter, setRegionFilter] = useState('all');
+  const [deptFilter, setDeptFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statutFilter, setStatutFilter] = useState('all');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -95,11 +98,21 @@ export const CaissesListPage: React.FC = () => {
     }
   };
 
-  const filteredCaisses = caisses.filter(caisse =>
-    caisse.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    caisse.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    caisse.commune.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCaisses = caisses.filter(caisse => {
+    const matchesSearch = searchQuery === '' || 
+      caisse.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      caisse.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      caisse.commune.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesRegion = regionFilter === 'all' || caisse.region === (SENEGAL_GEOGRAPHIC_DATA as any)[regionFilter]?.nom;
+    const matchesDept = deptFilter === 'all' || caisse.departement === deptFilter;
+    
+    return matchesSearch && matchesRegion && matchesDept;
+  });
+
+  const regions = getRegions();
+  console.log('Regions:', regions);
+  const departements = regionFilter !== 'all' ? getDepartements(regionFilter) : [];
 
   const getStatutColor = (statut: string) => {
     switch (statut) {
@@ -225,25 +238,39 @@ export const CaissesListPage: React.FC = () => {
               </div>
 
               {/* Localisation Filter */}
-              <div className="flex gap-3">
-                <div className="relative">
+              <div className="flex flex-wrap gap-3">
+                <div className="relative min-w-[200px]">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <select
-                    className="appearance-none pl-9 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium"
+                    value={regionFilter}
+                    className="appearance-none w-full pl-9 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium"
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === 'all') setSearchQuery('');
-                      else setSearchQuery(val);
+                      setRegionFilter(e.target.value);
+                      setDeptFilter('all');
                     }}
                   >
                     <option value="all">🌍 Toutes régions</option>
-                    <option value="Dakar">Dakar</option>
-                    <option value="Thiès">Thiès</option>
-                    <option value="Diourbel">Diourbel</option>
-                    <option value="Saint-Louis">Saint-Louis</option>
-                    <option value="Kaolack">Kaolack</option>
+                    {regions.map(r => (
+                      <option key={r.code} value={r.code}>{r.nom}</option>
+                    ))}
                   </select>
                 </div>
+
+                {regionFilter !== 'all' && (
+                  <div className="relative min-w-[200px]">
+                    <select
+                      value={deptFilter}
+                      className="appearance-none w-full px-5 py-3 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white cursor-pointer font-medium"
+                      onChange={(e) => setDeptFilter(e.target.value)}
+                    >
+                      <option value="all">🏘️ Tous départements</option>
+                      {departements.map(d => (
+                        <option key={d.code} value={d.nom}>{d.nom}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="relative">
                   <select
                     value={typeFilter}

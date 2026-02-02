@@ -19,7 +19,7 @@ connectDB();
 // Middlewares de sécurité
 app.use(helmet());
 app.use(cors({ 
-  origin: config.cors.origins,
+  origin: true,
   credentials: true
 }));
 
@@ -28,6 +28,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Logging
+app.use((req, res, next) => {
+  logger.info(`📥 [${config.serviceName}] ${req.method} ${req.url}`, {
+    origin: req.get('origin'),
+    userAgent: req.get('user-agent')
+  });
+  next();
+});
+
 if (config.env === 'development') {
   app.use(morgan('dev'));
 }

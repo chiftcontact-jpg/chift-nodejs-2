@@ -1,27 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, CreditCard, Wallet, AlertTriangle, Send } from 'lucide-react';
+import { ArrowLeft, Users, CreditCard, Wallet, AlertTriangle, Send, MapPin } from 'lucide-react';
+import { getRegions, getDepartements } from '../data/geography';
 
 export const DemandeSokhlaCommunautairePage: React.FC = () => {
   const navigate = useNavigate();
-  const [montant, setMontant] = useState('');
-  const [canalReception, setCanalReception] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [regions] = useState(getRegions());
+  const [departements, setDepartements] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    montant: '',
+    canalReception: '',
+    region: '',
+    departement: ''
+  });
   const [showError, setShowError] = useState(false);
 
-  const handleSubmit = () => {
-    if (!montant || !canalReception) {
+  useEffect(() => {
+    if (formData.region) {
+      setDepartements(getDepartements(formData.region));
+    } else {
+      setDepartements([]);
+    }
+  }, [formData.region]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    if (name === 'region') {
+      setFormData(prev => ({ ...prev, departement: '' }));
+    }
+    setShowError(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.montant || !formData.canalReception || !formData.region || !formData.departement) {
       setShowError(true);
       return;
     }
     
-    // Logique d'envoi de la demande
-    console.log('Demande envoyée:', { montant, canalReception });
-    // Navigation ou affichage d'un message de succès
+    try {
+      setLoading(true);
+      // Simuler l'envoi
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      alert('✅ Votre demande communautaire a été envoyée avec succès.');
+      navigate('/');
+    } catch (error) {
+      console.error('Erreur:', error);
+      alert('❌ Une erreur est survenue.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const isFormValid = montant && canalReception && 
-    parseFloat(montant) >= 1000 && 
-    parseFloat(montant) <= 500000;
+  const isFormValid = formData.montant && formData.canalReception && 
+    formData.region && formData.departement &&
+    parseFloat(formData.montant) >= 1000 && 
+    parseFloat(formData.montant) <= 500000;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -96,15 +135,13 @@ export const DemandeSokhlaCommunautairePage: React.FC = () => {
             </label>
             <div className="relative">
               <input
-                type="number"
-                value={montant}
-                onChange={(e) => {
-                  setMontant(e.target.value);
-                  setShowError(false);
-                }}
-                placeholder="Ex: 50000"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-16"
-              />
+                  type="number"
+                  name="montant"
+                  value={formData.montant}
+                  onChange={handleChange}
+                  placeholder="Ex: 50000"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-16"
+                />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
                 FCFA
               </span>
@@ -112,6 +149,51 @@ export const DemandeSokhlaCommunautairePage: React.FC = () => {
             <p className="mt-2 text-xs text-gray-500">
               Montant minimum : 1 000 FCFA - Montant maximum : 500 000 FCFA
             </p>
+          </div>
+
+          {/* Localisation */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="w-5 h-5 text-green-600" />
+              <h3 className="font-semibold text-gray-900">Localisation</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Région <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Sélectionnez une région</option>
+                  {regions.map(r => (
+                    <option key={r.code} value={r.code}>{r.nom}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Département <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="departement"
+                  value={formData.departement}
+                  onChange={handleChange}
+                  disabled={!formData.region}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white disabled:opacity-50"
+                >
+                  <option value="">Sélectionnez un département</option>
+                  {departements.map(d => (
+                    <option key={d.code} value={d.nom}>{d.nom}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Canal de réception */}
@@ -125,11 +207,9 @@ export const DemandeSokhlaCommunautairePage: React.FC = () => {
               Comment souhaitez-vous recevoir votre aide ? <span className="text-red-500">*</span>
             </label>
             <select
-              value={canalReception}
-              onChange={(e) => {
-                setCanalReception(e.target.value);
-                setShowError(false);
-              }}
+              name="canalReception"
+              value={formData.canalReception}
+              onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
             >
               <option value="">Sélectionnez un canal</option>

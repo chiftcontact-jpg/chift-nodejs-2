@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Wallet, ArrowRight } from 'lucide-react';
-import { SENEGAL_GEOGRAPHIC_DATA } from '../data/geoData';
+import { SENEGAL_GEOGRAPHIC_DATA, getDepartements } from '../data/geography';
 
 interface DepartementStats {
   nom: string;
@@ -20,10 +20,10 @@ export const RegionDepartementsPage: React.FC = () => {
       const regionData = SENEGAL_GEOGRAPHIC_DATA[regionId as keyof typeof SENEGAL_GEOGRAPHIC_DATA];
       setRegion(regionData);
 
-      // Simuler les données des départements (à remplacer par des appels API)
-      const deptStats: DepartementStats[] = Object.keys(regionData.departements).map((deptKey) => {
-        const dept = regionData.departements[deptKey as keyof typeof regionData.departements] as any;
-        
+      // Récupérer les départements via l'utilitaire geography
+      const depts = getDepartements(regionId);
+      
+      const deptStats: DepartementStats[] = depts.map((dept) => {
         // Données mock basées sur l'image
         const mockData: Record<string, { nombreCaisses: number; total: string }> = {
           'DAKAR': { nombreCaisses: 6, total: '4.1K FCFA' },
@@ -34,9 +34,9 @@ export const RegionDepartementsPage: React.FC = () => {
         };
 
         return {
-          nom: dept.nom || deptKey,
-          nombreCaisses: mockData[deptKey]?.nombreCaisses || 0,
-          total: mockData[deptKey]?.total || '0 FCFA'
+          nom: dept.nom,
+          nombreCaisses: mockData[dept.code]?.nombreCaisses || 0,
+          total: mockData[dept.code]?.total || '0 FCFA'
         };
       });
 

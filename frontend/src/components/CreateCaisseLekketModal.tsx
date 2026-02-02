@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Users } from 'lucide-react';
-import { SENEGAL_GEOGRAPHIC_DATA } from '../data/geoData';
+import { getRegions, getDepartements, getArrondissements, getCommunes, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 import { agentAPI } from '../lib/api';
 
 // Type pour les données géographiques
@@ -86,10 +86,7 @@ export const CreateCaisseLekketModal: React.FC<CreateCaisseLekketModalProps> = (
 
   // Charger les régions et agents au montage
   useEffect(() => {
-    if (SENEGAL_GEO) {
-      const regionKeys = Object.keys(SENEGAL_GEO);
-      setRegions(regionKeys);
-    }
+    setRegions(getRegions().map(r => r.code));
     
     // Charger la liste des agents
     agentAPI.getAll().then(response => {
@@ -103,11 +100,8 @@ export const CreateCaisseLekketModal: React.FC<CreateCaisseLekketModalProps> = (
 
   // Charger les départements quand la région change
   useEffect(() => {
-    if (formData.region && SENEGAL_GEO[formData.region]) {
-      const depts = Object.keys(SENEGAL_GEO[formData.region].departements).map(key => ({
-        code: key,
-        nom: SENEGAL_GEO[formData.region].departements[key].nom
-      }));
+    if (formData.region) {
+      const depts = getDepartements(formData.region);
       setDepartements(depts);
       setArrondissements([]);
       setCommunes([]);
@@ -117,26 +111,26 @@ export const CreateCaisseLekketModal: React.FC<CreateCaisseLekketModalProps> = (
 
   // Charger les arrondissements quand le département change
   useEffect(() => {
-    if (formData.region && formData.departement && SENEGAL_GEO[formData.region]) {
-      const dept = SENEGAL_GEO[formData.region].departements[formData.departement];
-      if (dept && dept.arrondissements) {
-        setArrondissements(dept.arrondissements);
-        setCommunes([]);
-        setFormData(prev => ({ ...prev, arrondissement: '', commune: '' }));
-      }
+    if (formData.region && formData.departement) {
+      const arrs = getArrondissements(formData.region, formData.departement);
+      setArrondissements(arrs);
+      setCommunes([]);
+      setFormData(prev => ({ ...prev, arrondissement: '', commune: '' }));
     }
   }, [formData.departement, formData.region]);
 
   // Charger les communes quand l'arrondissement change
   useEffect(() => {
-    if (formData.arrondissement && arrondissements.length > 0) {
+    if (formData.region && formData.departement && formData.arrondissement) {
+      // Trouver le code de l'arrondissement à partir de son nom
       const arr = arrondissements.find(a => a.nom === formData.arrondissement);
-      if (arr && arr.communes) {
-        setCommunes(arr.communes);
+      if (arr) {
+        const coms = getCommunes(formData.region, formData.departement, arr.code);
+        setCommunes(coms);
         setFormData(prev => ({ ...prev, commune: '' }));
       }
     }
-  }, [formData.arrondissement, arrondissements]);
+  }, [formData.arrondissement, formData.region, formData.departement, arrondissements]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

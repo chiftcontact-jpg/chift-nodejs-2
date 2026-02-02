@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
 import { CheckCircle, AlertCircle, UserPlus } from 'lucide-react'
 import api from '../lib/api'
-import { EnrollmentFormData, REGIONS_SENEGAL, MECANISMES_ENDOGENES, OBJECTIFS_FINANCIERS } from '../types'
+import { EnrollmentFormData, MECANISMES_ENDOGENES, OBJECTIFS_FINANCIERS } from '../types'
+import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography'
 
 const EnrollmentPage = () => {
   const [step, setStep] = useState(1)
@@ -14,6 +15,7 @@ const EnrollmentPage = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     reset
   } = useForm<EnrollmentFormData>({
@@ -26,9 +28,13 @@ const EnrollmentPage = () => {
 
   const possedeMecanisme = watch('possedeMecanismeEndogene')
   const faitPartieCommunaute = watch('faitPartieCommunaute')
+  const selectedRegion = watch('region')
 
   const mutation = useMutation({
     mutationFn: async (data: EnrollmentFormData) => {
+      // Transformer le code de région en nom pour le backend
+      const regionName = data.region ? (SENEGAL_GEOGRAPHIC_DATA as any)[data.region]?.nom : ''
+
       // Créer d'abord la souscription
       const souscriptionResponse = await api.post('/souscriptions', {
         typeSouscription: data.typeUtilisateur === 'communautaire' ? 'communautaire' : 'individuelle',
@@ -62,7 +68,7 @@ const EnrollmentPage = () => {
           dateNaissance: data.dateNaissance,
           profession: data.profession,
           adresse: data.adresse,
-          region: data.region,
+          region: regionName,
           departement: data.departement,
           commune: data.commune
         }
@@ -415,13 +421,16 @@ const EnrollmentPage = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700 ml-1">Région *</label>
                   <select
-                    {...register('region', { required: 'Région requise' })}
+                    {...register('region', { 
+                      required: 'Région requise',
+                      onChange: () => setValue('departement', '')
+                    })}
                     className="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none appearance-none cursor-pointer"
                   >
                     <option value="">Sélectionner...</option>
-                    {REGIONS_SENEGAL.map((region) => (
-                      <option key={region} value={region}>
-                        {region}
+                    {getRegions().map((region) => (
+                      <option key={region.code} value={region.code}>
+                        {region.nom}
                       </option>
                     ))}
                   </select>
@@ -432,13 +441,20 @@ const EnrollmentPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700 ml-1">Département *</label>
-                  <input
+                  <select
                     {...register('departement', {
                       required: 'Département requis'
                     })}
-                    className="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none"
-                    placeholder="Dakar"
-                  />
+                    disabled={!selectedRegion}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-transparent rounded-xl focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Sélectionner...</option>
+                    {selectedRegion && getDepartements(selectedRegion).map((dept) => (
+                      <option key={dept.code} value={dept.nom}>
+                        {dept.nom}
+                      </option>
+                    ))}
+                  </select>
                   {errors.departement && (
                     <p className="text-xs font-medium text-red-500 ml-1">{errors.departement.message}</p>
                   )}

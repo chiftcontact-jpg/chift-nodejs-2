@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { userAPI } from '../lib/api';
 import type { UtilisateurFormData, BeneficiaireFormData } from '../components/NouvelUtilisateurModal';
+import { getRegions, getDepartements, SENEGAL_GEOGRAPHIC_DATA } from '../data/geography';
 
 const createEmptyBeneficiaire = (): BeneficiaireFormData => ({
   nom: '',
@@ -87,7 +88,13 @@ export const NouvelAdherentPage: React.FC = () => {
     const { name, value, type } = e.target;
     const val = type === 'number' ? Number(value) : (type === 'checkbox' ? (e.target as HTMLInputElement).checked : value);
     
-    if (name.includes('.')) {
+    if (name === 'region') {
+      setFormData(prev => ({
+        ...prev,
+        region: val as string,
+        departement: '' // Reset department when region changes
+      }));
+    } else if (name.includes('.')) {
       const [parent, child, grandChild] = name.split('.');
       setFormData(prev => {
         if (grandChild) {
@@ -178,7 +185,8 @@ export const NouvelAdherentPage: React.FC = () => {
         email: formData.email || `adh-${Date.now()}@chift.sn`,
         password: 'Password123!',
         rolePrincipal: formData.role,
-        ...formData
+        ...formData,
+        region: formData.region ? (SENEGAL_GEOGRAPHIC_DATA as any)[formData.region]?.nom : ''
       };
 
       const response = await userAPI.create(payload);
@@ -283,12 +291,23 @@ export const NouvelAdherentPage: React.FC = () => {
                   <label className="text-sm font-semibold text-gray-700">Région</label>
                   <select name="region" value={formData.region} onChange={handleChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white">
                     <option value="">Sélectionner une région</option>
-                    {['DAKAR', 'THIES', 'DIOURBEL', 'LOUGA', 'SAINT-LOUIS', 'KAOLACK', 'FATICK', 'KAFFRINE', 'KOLDA', 'MATAM', 'SEDHIOU', 'TAMBACOUNDA', 'ZIGUINCHOR', 'KEDOUGOU'].map(r => <option key={r} value={r}>{r}</option>)}
+                    {getRegions().map(r => <option key={r.code} value={r.code}>{r.nom}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Département</label>
-                  <input type="text" name="departement" value={formData.departement} onChange={handleChange} className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Ex: Dakar" />
+                  <select 
+                    name="departement" 
+                    value={formData.departement} 
+                    onChange={handleChange} 
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    disabled={!formData.region}
+                  >
+                    <option value="">Sélectionner un département</option>
+                    {formData.region && getDepartements(formData.region).map(d => (
+                      <option key={d.code} value={d.nom}>{d.nom}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className="text-sm font-semibold text-gray-700">Adresse Complète</label>

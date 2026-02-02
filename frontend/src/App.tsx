@@ -1,3 +1,4 @@
+import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import { AdminLayout } from './components/AdminLayout'
@@ -31,6 +32,41 @@ import { useAuthStore } from './store/authStore'
 
 function App() {
   const { isAuthenticated, user, hasRole } = useAuthStore()
+  const [isRehydrated, setIsRehydrated] = React.useState(false)
+
+  React.useEffect(() => {
+    // Vérifier si le store est hydraté
+    const checkHydration = async () => {
+      // @ts-ignore - persist is added by middleware
+      if (useAuthStore.persist?.hasHydrated()) {
+        setIsRehydrated(true)
+      } else {
+        // Attendre l'hydratation si pas encore faite
+        // @ts-ignore
+        const unsub = useAuthStore.persist?.onHydrate(() => setIsRehydrated(false))
+        // @ts-ignore
+        const unsubFinish = useAuthStore.persist?.onFinishHydration(() => setIsRehydrated(true))
+        
+        // Sécurité au cas où
+        setTimeout(() => setIsRehydrated(true), 500)
+        
+        return () => {
+          unsub?.()
+          unsubFinish?.()
+        }
+      }
+    }
+    checkHydration()
+  }, [])
+  
+  if (!isRehydrated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   const isAdmin = hasRole('ADMIN')
   const isAgent = hasRole('AGENT') || hasRole('SUPERVISEUR')
   const isMaker = hasRole('MAKER')
