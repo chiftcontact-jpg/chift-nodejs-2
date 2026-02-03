@@ -108,31 +108,31 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1>Bienvenue dans la Communauté CHIFT</h1>
+      <h1>Bienvenue dans la communauté CHIFT</h1>
     </div>
     <div class="content">
       <p class="welcome-text">Bonjour {{name}},</p>
+      <p>Nous sommes ravis de vous compter parmi les membres de la communauté CHIFT. Votre compte a été créé avec succès.</p>
       
-      <p>Nous avons le plaisir de vous accueillir au sein de la plateforme CHIFT. Votre compte a été configuré avec succès avec le profil suivant :</p>
+      <p>Voici vos accès pour le lien Vercel :</p>
       
-      <div style="text-align: center;">
-        <span class="role-badge">{{role}}</span>
-      </div>
-
       <div class="credentials-box">
-        <h3 style="margin-top: 0; color: #0f766e; font-size: 16px;">Vos accès personnels :</h3>
         <div class="credential-item">
-          <span class="label">Lien :</span>
-          <a href="{{loginUrl}}" style="color: #0d9488;">Accéder à CHIFT</a>
-        </div>
-        <div class="credential-item">
-          <span class="label">Identifiant :</span>
+          <span class="label">Email :</span>
           <span class="value">{{credentials.email}}</span>
         </div>
+        {{#if credentials.password}}
         <div class="credential-item">
           <span class="label">Mot de passe :</span>
           <span class="value">{{credentials.password}}</span>
         </div>
+        {{/if}}
+        {{#if role}}
+        <div class="credential-item">
+          <span class="label">Rôle :</span>
+          <span class="role-badge">{{role}}</span>
+        </div>
+        {{/if}}
       </div>
 
       <p><strong>Note importante :</strong> Ces accès sont exclusivement dédiés à votre profil d'utilisateur uniquement. Pour des raisons de sécurité, nous vous demandons de modifier ce mot de passe dès votre première connexion en utilisant le lien ci-dessous :</p>
