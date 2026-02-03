@@ -24,6 +24,9 @@ interface Config {
   apiGateway: {
     url: string;
   };
+  services: {
+    mail: string;
+  };
 }
 
 const config: Config = {
@@ -52,6 +55,10 @@ const config: Config = {
   
   apiGateway: {
     url: process.env.API_GATEWAY_URL || 'http://localhost:3045'
+  },
+
+  services: {
+    mail: process.env.MAIL_SERVICE_URL || 'http://localhost:3052'
   }
 };
 

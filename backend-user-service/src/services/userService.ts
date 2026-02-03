@@ -5,6 +5,7 @@ import { generateToken, generateRefreshToken } from '../utils/jwt';
 import { AppError } from '../middlewares/errorHandler';
 import logger from '../utils/logger';
 import axios from 'axios';
+import config from '../config';
 import { REGIONS_CODES, DEPARTEMENTS_CODES } from '../utils/geoCodes';
 
 export class UserService {
@@ -128,10 +129,11 @@ export class UserService {
 
       // Envoyer l'email de bienvenue avec le lien de réinitialisation et les accès par défaut
       try {
-        const resetUrl = `${process.env.FRONTEND_URL || 'http://192.168.1.21:3046'}/set-password?token=${resetToken}`;
-        const loginUrl = `${process.env.FRONTEND_URL || 'http://192.168.1.21:3046'}/login`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3046';
+        const resetUrl = `${frontendUrl}/set-password?token=${resetToken}`;
+        const loginUrl = `${frontendUrl}/login`;
         
-        await axios.post('http://mail-service:3052/api/mail/send/welcome', {
+        await axios.post(`${config.services.mail}/api/mail/send/welcome`, {
           to: user.email,
           name: `${user.prenom} ${user.nom}`,
           role: user.rolePrincipal,

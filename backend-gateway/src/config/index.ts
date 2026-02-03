@@ -12,6 +12,7 @@ interface Config {
     caisse: string;
     backend: string;
     comptes: string;
+    mail: string;
   };
   ssl: {
     keyPath: string;
@@ -39,6 +40,7 @@ const config: Config = {
     caisse: process.env.CAISSE_SERVICE_URL || 'http://localhost:3051',
     backend: process.env.BACKEND_URL || 'http://localhost:3045',
     comptes: process.env.COMPTES_SERVICE_URL || 'http://localhost:3053',
+    mail: process.env.MAIL_SERVICE_URL || 'http://localhost:3052',
   },
   ssl: {
     keyPath: process.env.SSL_KEY_PATH || './ssl/key.pem',

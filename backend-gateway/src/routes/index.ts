@@ -197,6 +197,40 @@ router.use(
   })
 );
 
+// Proxy vers le service mail
+router.use(
+  '/mail',
+  authenticate,
+  createProxyMiddleware({
+    target: config.services.mail,
+    changeOrigin: true,
+    selfHandleResponse: false,
+    pathRewrite: (path, req) => {
+      if (req.originalUrl.startsWith('/api/mail')) return req.originalUrl;
+      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+      return `/api/mail${cleanPath === '/' ? '' : cleanPath}`;
+    },
+    onProxyReq: (proxyReq, req: any, res) => {
+      fixRequestBody(proxyReq, req);
+      logger.info('Proxy vers mail-service', {
+        path: req.path,
+        method: req.method,
+        target: config.services.mail,
+      });
+    },
+    onError: (err, req, res) => {
+      logger.error('Erreur proxy mail-service', {
+        error: err.message,
+        path: req.url,
+      });
+      res.status(502).json({
+        success: false,
+        message: 'Service mail indisponible',
+      });
+    },
+  })
+);
+
 // Proxy vers le service backend legacy (pour les routes non encore migrées)
 const legacyRoutes = ['/utilisateurs', '/souscriptions', '/agents', '/reseaux', '/init'];
 router.use(
@@ -248,6 +282,7 @@ router.get('/health', (req, res) => {
       caisse: config.services.caisse,
       backend: config.services.backend,
       comptes: config.services.comptes,
+      mail: config.services.mail,
     },
   });
 });
